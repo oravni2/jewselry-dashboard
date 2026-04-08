@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jewselry Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="top-nav">
+    <div class="nav-brand">Jewselry</div>
+    <div class="nav-links">
+      <a href="#" class="nav-link active" data-page="tasks">משימות</a>
+      <a href="#" class="nav-link" data-page="cs">שירות לקוחות</a>
+      <a href="#" class="nav-link" data-page="settings">הגדרות</a>
+    </div>
+  </nav>
+
+  <!-- Tasks Page -->
+  <main id="page-tasks" class="page active">
+    <div class="page-header">
+      <h1>ניהול משימות</h1>
+      <div class="page-actions">
+        <label class="toggle-label">
+          <input type="checkbox" id="show-all-tasks">
+          <span>הצג את כל המשימות</span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="show-done-tasks">
+          <span>הצג משימות שהושלמו</span>
+        </label>
+        <button class="btn btn-primary" id="btn-add-task">+ משימה חדשה</button>
+      </div>
+    </div>
+    <div id="tasks-list" class="tasks-list">
+      <div class="loading">טוען...</div>
+    </div>
+  </main>
+
+  <!-- Customer Service Page -->
+  <main id="page-cs" class="page">
+    <div class="page-header">
+      <h1>סוכן שירות לקוחות</h1>
+    </div>
+    <div class="cs-form">
+      <div class="form-group">
+        <label for="cs-customer-msg">הודעת הלקוח</label>
+        <textarea id="cs-customer-msg" rows="6" placeholder="הדבק כאן את הודעת הלקוח (בכל שפה)..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="cs-david-notes">הערות של דוד (אופציונלי)</label>
+        <textarea id="cs-david-notes" rows="3" placeholder="הערות נוספות..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="btn-generate-reply">צור תשובה</button>
+      <div id="cs-output" class="cs-output" style="display:none;">
+        <div class="cs-section">
+          <h3>סיכום בעברית</h3>
+          <div id="cs-summary" class="cs-text"></div>
+        </div>
+        <div class="cs-section">
+          <div class="cs-section-header">
+            <h3>English Reply</h3>
+            <button class="btn btn-small" id="btn-copy-reply">העתק</button>
+          </div>
+          <div id="cs-reply" class="cs-text"></div>
+        </div>
+      </div>
+      <div id="cs-loading" class="loading" style="display:none;">מייצר תשובה...</div>
+    </div>
+  </main>
+
+  <!-- Settings Page -->
+  <main id="page-settings" class="page">
+    <div class="page-header">
+      <h1>הגדרות</h1>
+    </div>
+
+    <section class="settings-section">
+      <h2>System Prompt - שירות לקוחות</h2>
+      <div class="form-group">
+        <textarea id="settings-prompt" rows="8"></textarea>
+      </div>
+      <button class="btn btn-primary" id="btn-save-prompt">שמור</button>
+      <span id="prompt-saved-msg" class="saved-msg" style="display:none;">נשמר!</span>
+    </section>
+
+    <section class="settings-section">
+      <h2>קטגוריות</h2>
+      <div id="categories-list" class="categories-list"></div>
+      <div class="add-category-form">
+        <input type="text" id="new-cat-name" placeholder="שם קטגוריה">
+        <input type="color" id="new-cat-color" value="#6366f1">
+        <button class="btn btn-primary" id="btn-add-category">הוסף</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add/Edit Task Modal -->
+  <div id="task-modal" class="modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2 id="modal-title">משימה חדשה</h2>
+      <form id="task-form">
+        <input type="hidden" id="task-id">
+        <div class="form-group">
+          <label for="task-title">כותרת *</label>
+          <input type="text" id="task-title" required>
+        </div>
+        <div class="form-group">
+          <label for="task-desc">תיאור</label>
+          <textarea id="task-desc" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="task-due">תאריך יעד</label>
+          <input type="date" id="task-due">
+        </div>
+        <div class="form-group">
+          <label for="task-category">קטגוריה</label>
+          <select id="task-category">
+            <option value="">ללא</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="task-assigned">משויך ל</label>
+          <select id="task-assigned">
+            <option value="david">דוד</option>
+            <option value="or">אור</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">שמור</button>
+          <button type="button" class="btn btn-secondary" id="btn-cancel-task">ביטול</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Category Modal -->
+  <div id="category-modal" class="modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2>עריכת קטגוריה</h2>
+      <form id="category-form">
+        <input type="hidden" id="edit-cat-id">
+        <div class="form-group">
+          <label for="edit-cat-name">שם</label>
+          <input type="text" id="edit-cat-name" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-cat-color">צבע</label>
+          <input type="color" id="edit-cat-color">
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">שמור</button>
+          <button type="button" class="btn btn-secondary" id="btn-cancel-cat">ביטול</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

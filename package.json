@@ -1,0 +1,15 @@
+{
+  "name": "jewselry-dashboard",
+  "version": "1.0.0",
+  "description": "Jewselry Dashboard - Task Management & Customer Service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "express": "^4.21.2"
+  }
+}

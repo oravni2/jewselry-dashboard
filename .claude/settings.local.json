@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "mcp__107e09f2-0275-4694-937d-06e1fc231128__list_projects",
+      "mcp__107e09f2-0275-4694-937d-06e1fc231128__execute_sql",
+      "Bash(pkill -f \"node server.js\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
