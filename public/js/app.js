@@ -325,6 +325,7 @@ async function loadSalesData() {
   if (type) salesUrl += `&listing_type=${type}`;
   const salesRows = await api(salesUrl);
   renderDailyChart(salesRows, month);
+  renderCountryBreakdown(salesRows);
 }
 
 function renderKPIs(summary, typeFilter) {
@@ -391,17 +392,18 @@ function renderTypeBreakdown(data, typeFilter) {
 
   container.innerHTML = types
     .filter(t => !typeFilter || t === typeFilter)
+    .filter(t => (data.byType[t]?.orders || 0) > 0)
     .map(t => {
       const info = data.byType[t] || { revenue: 0, orders: 0, items: 0 };
       const pct = maxRevenue > 0 ? (info.revenue / maxRevenue * 100) : 0;
       return `
         <div class="type-row">
-          <div class="type-label">${labels[t]}</div>
+          <div class="type-row-header">
+            <div class="type-label"><span class="type-dot ${t}"></span>${labels[t]}</div>
+            <div class="type-stats">${info.orders} הזמנות · ${info.items} פריטים · <strong>$${formatNumber(info.revenue)}</strong></div>
+          </div>
           <div class="type-bar-wrap">
             <div class="type-bar ${t}" style="width:${pct}%"></div>
-          </div>
-          <div class="type-stats">
-            <strong>$${formatNumber(info.revenue)}</strong> · ${info.orders} הזמנות · ${info.items} פריטים
           </div>
         </div>
       `;
@@ -426,6 +428,38 @@ function renderBestsellers(data, typeFilter) {
       <div class="bestseller-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
       <div class="bestseller-qty">${item.quantity} יח'</div>
       <div class="bestseller-rev">$${formatNumber(item.revenue)}</div>
+    </div>
+  `).join('');
+}
+
+function renderCountryBreakdown(rows) {
+  const container = document.getElementById('country-breakdown');
+  if (!container) return;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:1rem;">אין נתונים להצגה</div>';
+    return;
+  }
+
+  const countryMap = {};
+  rows.forEach(r => {
+    const c = r.country || 'לא ידוע';
+    if (!countryMap[c]) countryMap[c] = { revenue: 0, orders: new Set() };
+    countryMap[c].revenue += (Number(r.price) * r.quantity) - (Number(r.discount) || 0);
+    countryMap[c].orders.add(r.order_id);
+  });
+
+  const sorted = Object.entries(countryMap)
+    .map(([name, d]) => ({ name, revenue: d.revenue, orders: d.orders.size }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10);
+
+  container.innerHTML = sorted.map((c, i) => `
+    <div class="country-item">
+      <div class="country-rank">${i + 1}</div>
+      <div class="country-name">${escapeHtml(c.name)}</div>
+      <div class="country-orders">${c.orders} הזמנות</div>
+      <div class="country-rev">$${formatNumber(c.revenue)}</div>
     </div>
   `).join('');
 }

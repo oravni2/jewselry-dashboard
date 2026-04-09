@@ -911,30 +911,57 @@ body {
 
 .type-row {
   display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.type-row-header {
+  display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
 }
 
 .type-label {
-  width: 70px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--stone-700);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.type-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.type-dot.digital {
+  background: #6366f1;
+}
+
+.type-dot.pod {
+  background: #ec4899;
+}
+
+.type-dot.physical {
+  background: var(--gold-600);
 }
 
 .type-bar-wrap {
-  flex: 1;
-  height: 28px;
+  width: 100%;
+  height: 10px;
   background: var(--stone-100);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   overflow: hidden;
   position: relative;
 }
 
 .type-bar {
   height: 100%;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   transition: width 0.5s ease;
   min-width: 2px;
 }
@@ -952,16 +979,68 @@ body {
 }
 
 .type-stats {
-  width: 140px;
   font-size: 0.8rem;
   color: var(--stone-500);
-  text-align: left;
   flex-shrink: 0;
 }
 
 .type-stats strong {
   color: var(--stone-800);
   font-weight: 700;
+}
+
+/* Country Breakdown */
+.country-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.country-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--stone-100);
+}
+
+.country-item:last-child {
+  border-bottom: none;
+}
+
+.country-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--stone-100);
+  color: var(--stone-600);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.country-name {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--stone-700);
+}
+
+.country-orders {
+  font-size: 0.78rem;
+  color: var(--stone-400);
+  flex-shrink: 0;
+}
+
+.country-rev {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--stone-800);
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: left;
 }
 
 /* Bestsellers */
@@ -1218,16 +1297,6 @@ body {
 
   .kpi-change {
     margin-top: 0;
-  }
-
-  .type-row {
-    flex-wrap: wrap;
-  }
-
-  .type-stats {
-    width: 100%;
-    text-align: right;
-    margin-top: -0.25rem;
   }
 
   .sales-filters {
