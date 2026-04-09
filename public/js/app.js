@@ -319,6 +319,12 @@ async function loadSalesData() {
   renderKPIs(summary, type);
   renderTypeBreakdown(summary.current, type);
   renderBestsellers(summary.current, type);
+
+  // Fetch raw rows for daily chart
+  let salesUrl = `/api/sales?month=${month}`;
+  if (type) salesUrl += `&listing_type=${type}`;
+  const salesRows = await api(salesUrl);
+  renderDailyChart(salesRows, month);
 }
 
 function renderKPIs(summary, typeFilter) {
@@ -336,10 +342,14 @@ function renderKPIs(summary, typeFilter) {
   document.getElementById('kpi-revenue').textContent = '$' + formatNumber(cur.revenue);
   document.getElementById('kpi-orders').textContent = formatNumber(cur.orders);
   document.getElementById('kpi-items').textContent = formatNumber(cur.items);
+  const curAov = cur.orders > 0 ? (cur.revenue / cur.orders).toFixed(2) : '0.00';
+  const prevAov = prev.orders > 0 ? (prev.revenue / prev.orders) : 0;
+  document.getElementById('kpi-aov').textContent = '$' + curAov;
 
   setChangeIndicator('kpi-revenue-change', cur.revenue, prev.revenue);
   setChangeIndicator('kpi-orders-change', cur.orders, prev.orders);
   setChangeIndicator('kpi-items-change', cur.items, prev.items);
+  setChangeIndicator('kpi-aov-change', parseFloat(curAov), prevAov);
 }
 
 function setChangeIndicator(elementId, current, previous) {
@@ -418,6 +428,88 @@ function renderBestsellers(data, typeFilter) {
       <div class="bestseller-rev">$${formatNumber(item.revenue)}</div>
     </div>
   `).join('');
+}
+
+let dailyChartInstance = null;
+
+function renderDailyChart(rows, month) {
+  const canvas = document.getElementById('daily-sales-canvas');
+  if (!canvas) return;
+
+  // Destroy previous chart
+  if (dailyChartInstance) {
+    dailyChartInstance.destroy();
+    dailyChartInstance = null;
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    canvas.style.display = 'none';
+    return;
+  }
+  canvas.style.display = 'block';
+
+  // Aggregate revenue by day
+  const dailyMap = {};
+  rows.forEach(r => {
+    const day = r.sale_date;
+    if (!dailyMap[day]) dailyMap[day] = 0;
+    dailyMap[day] += (Number(r.price) * r.quantity) - (Number(r.discount) || 0);
+  });
+
+  // Build full date range for the month
+  const [y, m] = month.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const labels = [];
+  const data = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${month}-${String(d).padStart(2, '0')}`;
+    labels.push(String(d));
+    data.push(dailyMap[dateStr] || 0);
+  }
+
+  const ctx = canvas.getContext('2d');
+  dailyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'הכנסות ($)',
+        data,
+        backgroundColor: 'rgba(202, 138, 4, 0.6)',
+        borderColor: 'rgba(161, 98, 7, 0.8)',
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `יום ${items[0].label}`,
+            label: (item) => `$${Number(item.raw).toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#78716c' },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: {
+            font: { size: 11 },
+            color: '#78716c',
+            callback: (v) => '$' + v.toLocaleString(),
+          },
+        }
+      }
+    }
+  });
 }
 
 // Sales filter listeners
@@ -521,6 +613,13 @@ function parseCSVLine(line) {
   return result;
 }
 
+function detectListingType(sku) {
+  if (!sku || sku.trim() === '') return 'physical';
+  if (sku.startsWith('JS')) return 'physical';
+  if (/^\d+$/.test(sku)) return 'pod'; // Printify — numeric only
+  return 'pod'; // Teelaunch and other POD — alphanumeric, not starting with JS
+}
+
 function mapEtsyRow(row) {
   // Etsy EtsySoldOrderItems CSV known column names (case-insensitive matching)
   const orderId = row['order id'] || row['sale id'] || row['transaction id'] || '';
@@ -548,14 +647,8 @@ function mapEtsyRow(row) {
     saleDate = new Date().toISOString().split('T')[0];
   }
 
-  // Guess listing type from item name keywords
-  let listingType = 'physical';
-  const nameLower = itemName.toLowerCase();
-  if (nameLower.includes('digital') || nameLower.includes('download') || nameLower.includes('printable') || nameLower.includes('svg') || nameLower.includes('pdf')) {
-    listingType = 'digital';
-  } else if (nameLower.includes('shirt') || nameLower.includes('hoodie') || nameLower.includes('mug') || nameLower.includes('tote') || nameLower.includes('poster') || nameLower.includes('print on demand') || nameLower.includes('pod')) {
-    listingType = 'pod';
-  }
+  // Detect listing type from SKU
+  const listingType = detectListingType(sku);
 
   return {
     order_id: orderId,

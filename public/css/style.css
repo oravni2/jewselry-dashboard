@@ -842,7 +842,7 @@ body {
 /* KPI Cards */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
@@ -895,6 +895,12 @@ body {
 /* Type Breakdown */
 .sales-section {
   margin-bottom: 1.25rem;
+}
+
+.chart-container {
+  position: relative;
+  height: 260px;
+  width: 100%;
 }
 
 .type-breakdown {
