@@ -4,92 +4,251 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jewselry Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <!-- Navigation -->
   <nav class="top-nav">
-    <div class="nav-brand">Jewselry</div>
-    <div class="nav-links">
-      <a href="#" class="nav-link active" data-page="tasks">משימות</a>
-      <a href="#" class="nav-link" data-page="cs">שירות לקוחות</a>
-      <a href="#" class="nav-link" data-page="settings">הגדרות</a>
+    <div class="nav-inner">
+      <a href="#" class="nav-brand" data-page="tasks">
+        <span class="brand-icon">&#9830;</span>
+        <span class="brand-text">Jewselry</span>
+      </a>
+      <div class="nav-links">
+        <a href="#" class="nav-link active" data-page="tasks">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z"/></svg>
+          <span>משימות</span>
+        </a>
+        <a href="#" class="nav-link" data-page="cs">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
+          <span>שירות לקוחות</span>
+        </a>
+        <a href="#" class="nav-link" data-page="sales">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+          <span>מכירות</span>
+        </a>
+        <a href="#" class="nav-link" data-page="settings">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          <span>הגדרות</span>
+        </a>
+      </div>
     </div>
   </nav>
 
   <!-- Tasks Page -->
   <main id="page-tasks" class="page active">
     <div class="page-header">
-      <h1>ניהול משימות</h1>
-      <div class="page-actions">
-        <label class="toggle-label">
-          <input type="checkbox" id="show-all-tasks">
-          <span>הצג את כל המשימות</span>
-        </label>
-        <label class="toggle-label">
-          <input type="checkbox" id="show-done-tasks">
-          <span>הצג משימות שהושלמו</span>
-        </label>
-        <button class="btn btn-primary" id="btn-add-task">+ משימה חדשה</button>
+      <div class="page-title-group">
+        <h1>ניהול משימות</h1>
+        <p class="page-subtitle">מעקב וניהול משימות יומיומיות</p>
       </div>
+      <button class="btn btn-primary btn-add" id="btn-add-task">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        משימה חדשה
+      </button>
+    </div>
+    <div class="filters-bar">
+      <label class="toggle-label">
+        <input type="checkbox" id="show-all-tasks">
+        <span class="toggle-switch"></span>
+        <span class="toggle-text">הצג את כל המשימות</span>
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="show-done-tasks">
+        <span class="toggle-switch"></span>
+        <span class="toggle-text">הצג משימות שהושלמו</span>
+      </label>
     </div>
     <div id="tasks-list" class="tasks-list">
-      <div class="loading">טוען...</div>
+      <div class="loading"><span class="spinner"></span>טוען...</div>
     </div>
   </main>
 
   <!-- Customer Service Page -->
   <main id="page-cs" class="page">
     <div class="page-header">
-      <h1>סוכן שירות לקוחות</h1>
+      <div class="page-title-group">
+        <h1>סוכן שירות לקוחות</h1>
+        <p class="page-subtitle">מענה מקצועי ללקוחות באמצעות AI</p>
+      </div>
     </div>
     <div class="cs-form">
-      <div class="form-group">
-        <label for="cs-customer-msg">הודעת הלקוח</label>
-        <textarea id="cs-customer-msg" rows="6" placeholder="הדבק כאן את הודעת הלקוח (בכל שפה)..."></textarea>
+      <div class="card">
+        <div class="form-group">
+          <label for="cs-customer-msg">הודעת הלקוח</label>
+          <textarea id="cs-customer-msg" rows="6" placeholder="הדבק כאן את הודעת הלקוח (בכל שפה)..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="cs-david-notes">הערות של דוד <span class="label-hint">(אופציונלי)</span></label>
+          <textarea id="cs-david-notes" rows="3" placeholder="הערות נוספות..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-generate" id="btn-generate-reply">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"/></svg>
+          צור תשובה
+        </button>
       </div>
-      <div class="form-group">
-        <label for="cs-david-notes">הערות של דוד (אופציונלי)</label>
-        <textarea id="cs-david-notes" rows="3" placeholder="הערות נוספות..."></textarea>
-      </div>
-      <button class="btn btn-primary" id="btn-generate-reply">צור תשובה</button>
+      <div id="cs-loading" class="loading" style="display:none;"><span class="spinner"></span>מייצר תשובה...</div>
       <div id="cs-output" class="cs-output" style="display:none;">
-        <div class="cs-section">
-          <h3>סיכום בעברית</h3>
+        <div class="cs-section cs-section-summary">
+          <div class="cs-section-label">סיכום בעברית</div>
           <div id="cs-summary" class="cs-text"></div>
         </div>
-        <div class="cs-section">
+        <div class="cs-section cs-section-reply">
           <div class="cs-section-header">
-            <h3>English Reply</h3>
-            <button class="btn btn-small" id="btn-copy-reply">העתק</button>
+            <div class="cs-section-label">English Reply</div>
+            <button class="btn btn-copy" id="btn-copy-reply">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+              העתק
+            </button>
           </div>
           <div id="cs-reply" class="cs-text"></div>
         </div>
       </div>
-      <div id="cs-loading" class="loading" style="display:none;">מייצר תשובה...</div>
     </div>
   </main>
+
+  <!-- Sales Page -->
+  <main id="page-sales" class="page">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1>ניתוח מכירות</h1>
+        <p class="page-subtitle">סיכום מכירות Etsy לפי חודש</p>
+      </div>
+      <button class="btn btn-primary btn-add" id="btn-upload-csv">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+        ייבוא CSV
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="sales-filters">
+      <div class="filter-group">
+        <label for="sales-month">חודש</label>
+        <select id="sales-month">
+          <option value="">טוען...</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="sales-type">סוג מוצר</label>
+        <select id="sales-type">
+          <option value="">הכל</option>
+          <option value="digital">דיגיטלי</option>
+          <option value="pod">POD</option>
+          <option value="physical">פיזי</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="sales-kpis">
+      <div class="kpi-card">
+        <div class="kpi-label">הכנסות החודש</div>
+        <div class="kpi-value" id="kpi-revenue">$0</div>
+        <div class="kpi-change" id="kpi-revenue-change"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">הזמנות</div>
+        <div class="kpi-value" id="kpi-orders">0</div>
+        <div class="kpi-change" id="kpi-orders-change"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">פריטים שנמכרו</div>
+        <div class="kpi-value" id="kpi-items">0</div>
+        <div class="kpi-change" id="kpi-items-change"></div>
+      </div>
+    </div>
+
+    <!-- Type Breakdown -->
+    <div class="card sales-section" id="sales-by-type">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
+        <h2>פילוח לפי סוג</h2>
+      </div>
+      <div id="type-breakdown" class="type-breakdown">
+        <div class="empty-state">אין נתונים להצגה</div>
+      </div>
+    </div>
+
+    <!-- Bestsellers -->
+    <div class="card sales-section" id="sales-bestsellers">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/></svg>
+        <h2>מוצרים מובילים (Top 10)</h2>
+      </div>
+      <div id="bestsellers-list" class="bestsellers-list">
+        <div class="empty-state">אין נתונים להצגה</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- CSV Upload Modal -->
+  <div id="csv-modal" class="modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2>ייבוא דוח מכירות Etsy</h2>
+      <div class="form-group">
+        <label for="csv-month">חודש הדוח</label>
+        <input type="month" id="csv-month">
+      </div>
+      <div class="form-group">
+        <label for="csv-file">קובץ CSV</label>
+        <div class="file-drop-zone" id="csv-drop-zone">
+          <input type="file" id="csv-file" accept=".csv" class="file-input-hidden">
+          <svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          <span class="file-drop-text">לחץ לבחירת קובץ או גרור לכאן</span>
+          <span class="file-drop-name" id="csv-file-name"></span>
+        </div>
+      </div>
+      <div id="csv-preview" class="csv-preview" style="display:none;">
+        <div class="csv-preview-info">
+          <span id="csv-row-count"></span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-import-csv" disabled>ייבוא</button>
+        <button class="btn btn-ghost" id="btn-cancel-csv">ביטול</button>
+      </div>
+      <div id="csv-import-result" class="import-result" style="display:none;"></div>
+    </div>
+  </div>
 
   <!-- Settings Page -->
   <main id="page-settings" class="page">
     <div class="page-header">
-      <h1>הגדרות</h1>
+      <div class="page-title-group">
+        <h1>הגדרות</h1>
+        <p class="page-subtitle">ניהול הגדרות המערכת</p>
+      </div>
     </div>
 
-    <section class="settings-section">
-      <h2>System Prompt - שירות לקוחות</h2>
-      <div class="form-group">
-        <textarea id="settings-prompt" rows="8"></textarea>
+    <section class="settings-section card">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
+        <h2>System Prompt - שירות לקוחות</h2>
       </div>
-      <button class="btn btn-primary" id="btn-save-prompt">שמור</button>
-      <span id="prompt-saved-msg" class="saved-msg" style="display:none;">נשמר!</span>
+      <div class="form-group">
+        <textarea id="settings-prompt" rows="10" class="mono-textarea"></textarea>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-primary" id="btn-save-prompt">שמור שינויים</button>
+        <span id="prompt-saved-msg" class="saved-msg" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          נשמר!
+        </span>
+      </div>
     </section>
 
-    <section class="settings-section">
-      <h2>קטגוריות</h2>
+    <section class="settings-section card">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+        <h2>קטגוריות</h2>
+      </div>
       <div id="categories-list" class="categories-list"></div>
       <div class="add-category-form">
-        <input type="text" id="new-cat-name" placeholder="שם קטגוריה">
+        <input type="text" id="new-cat-name" placeholder="שם קטגוריה חדשה">
         <input type="color" id="new-cat-color" value="#6366f1">
         <button class="btn btn-primary" id="btn-add-category">הוסף</button>
       </div>
@@ -104,16 +263,25 @@
       <form id="task-form">
         <input type="hidden" id="task-id">
         <div class="form-group">
-          <label for="task-title">כותרת *</label>
-          <input type="text" id="task-title" required>
+          <label for="task-title">כותרת <span class="required">*</span></label>
+          <input type="text" id="task-title" required placeholder="מה צריך לעשות?">
         </div>
         <div class="form-group">
           <label for="task-desc">תיאור</label>
-          <textarea id="task-desc" rows="3"></textarea>
+          <textarea id="task-desc" rows="3" placeholder="פירוט נוסף..."></textarea>
         </div>
-        <div class="form-group">
-          <label for="task-due">תאריך יעד</label>
-          <input type="date" id="task-due">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-due">תאריך יעד</label>
+            <input type="date" id="task-due">
+          </div>
+          <div class="form-group">
+            <label for="task-assigned">משויך ל</label>
+            <select id="task-assigned">
+              <option value="david">דוד</option>
+              <option value="or">אור</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label for="task-category">קטגוריה</label>
@@ -121,16 +289,9 @@
             <option value="">ללא</option>
           </select>
         </div>
-        <div class="form-group">
-          <label for="task-assigned">משויך ל</label>
-          <select id="task-assigned">
-            <option value="david">דוד</option>
-            <option value="or">אור</option>
-          </select>
-        </div>
         <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">שמור</button>
-          <button type="button" class="btn btn-secondary" id="btn-cancel-task">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמור משימה</button>
+          <button type="button" class="btn btn-ghost" id="btn-cancel-task">ביטול</button>
         </div>
       </form>
     </div>
@@ -153,7 +314,7 @@
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">שמור</button>
-          <button type="button" class="btn btn-secondary" id="btn-cancel-cat">ביטול</button>
+          <button type="button" class="btn btn-ghost" id="btn-cancel-cat">ביטול</button>
         </div>
       </form>
     </div>

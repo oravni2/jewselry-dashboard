@@ -21,7 +21,7 @@ const { createClient } = require('@supabase/supabase-js');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Supabase client
@@ -190,6 +190,133 @@ app.post('/api/cs/generate', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ---- SALES API ----
+
+// Get sales with optional filters
+app.get('/api/sales', async (req, res) => {
+  const { month, listing_type } = req.query;
+  let query = supabase
+    .from('etsy_sales')
+    .select('*')
+    .order('sale_date', { ascending: false });
+
+  if (month) query = query.eq('report_month', month);
+  if (listing_type) query = query.eq('listing_type', listing_type);
+
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Get sales summary/stats for a month (and previous month for comparison)
+app.get('/api/sales/summary', async (req, res) => {
+  const { month } = req.query;
+  if (!month) return res.status(400).json({ error: 'Month is required (YYYY-MM)' });
+
+  // Parse previous month
+  const [y, m] = month.split('-').map(Number);
+  const prevDate = new Date(y, m - 2, 1);
+  const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+
+  // Fetch current and previous month data
+  const [current, previous] = await Promise.all([
+    supabase.from('etsy_sales').select('*').eq('report_month', month),
+    supabase.from('etsy_sales').select('*').eq('report_month', prevMonth),
+  ]);
+
+  if (current.error) return res.status(500).json({ error: current.error.message });
+
+  const summarize = (rows) => {
+    if (!rows || !rows.length) return { revenue: 0, orders: 0, items: 0, byType: {}, bestsellers: [] };
+    const orderIds = new Set(rows.map(r => r.order_id));
+    const revenue = rows.reduce((sum, r) => sum + (Number(r.price) * r.quantity) - (Number(r.discount) || 0), 0);
+    const items = rows.reduce((sum, r) => sum + r.quantity, 0);
+
+    // By type
+    const byType = {};
+    rows.forEach(r => {
+      if (!byType[r.listing_type]) byType[r.listing_type] = { revenue: 0, orders: new Set(), items: 0 };
+      byType[r.listing_type].revenue += (Number(r.price) * r.quantity) - (Number(r.discount) || 0);
+      byType[r.listing_type].orders.add(r.order_id);
+      byType[r.listing_type].items += r.quantity;
+    });
+    // Convert sets to counts
+    Object.keys(byType).forEach(k => { byType[k].orders = byType[k].orders.size; });
+
+    // Bestsellers (top 10 by quantity)
+    const itemMap = {};
+    rows.forEach(r => {
+      const key = r.item_name;
+      if (!itemMap[key]) itemMap[key] = { name: key, quantity: 0, revenue: 0 };
+      itemMap[key].quantity += r.quantity;
+      itemMap[key].revenue += (Number(r.price) * r.quantity) - (Number(r.discount) || 0);
+    });
+    const bestsellers = Object.values(itemMap).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+
+    return { revenue, orders: orderIds.size, items, byType, bestsellers };
+  };
+
+  res.json({
+    current: summarize(current.data),
+    previous: summarize(previous.data || []),
+    month,
+    prevMonth,
+  });
+});
+
+// Get available months
+app.get('/api/sales/months', async (req, res) => {
+  const { data, error } = await supabase
+    .from('etsy_sales')
+    .select('report_month')
+    .order('report_month', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  const months = [...new Set(data.map(r => r.report_month))];
+  res.json(months);
+});
+
+// Upload/import sales data
+app.post('/api/sales/import', async (req, res) => {
+  const { rows, report_month } = req.body;
+  if (!rows || !rows.length) return res.status(400).json({ error: 'No rows to import' });
+  if (!report_month) return res.status(400).json({ error: 'Report month is required' });
+
+  // Upsert rows (skip duplicates via unique constraint)
+  let imported = 0;
+  let skipped = 0;
+  const errors = [];
+
+  for (const row of rows) {
+    const { data, error } = await supabase
+      .from('etsy_sales')
+      .upsert({
+        order_id: row.order_id,
+        item_name: row.item_name,
+        quantity: row.quantity || 1,
+        price: row.price || 0,
+        discount: row.discount || null,
+        sku: row.sku || null,
+        listing_type: row.listing_type || 'physical',
+        country: row.country || null,
+        sale_date: row.sale_date,
+        report_month,
+      }, { onConflict: 'order_id,sku', ignoreDuplicates: true })
+      .select();
+
+    if (error) {
+      errors.push(`Row ${row.order_id}: ${error.message}`);
+      skipped++;
+    } else if (data && data.length > 0) {
+      imported++;
+    } else {
+      skipped++;
+    }
+  }
+
+  res.json({ imported, skipped, errors: errors.slice(0, 5) });
 });
 
 // SPA fallback

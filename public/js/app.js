@@ -22,6 +22,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
     document.getElementById('page-' + page).classList.add('active');
 
     if (page === 'tasks') loadTasks();
+    if (page === 'sales') loadSalesPage();
     if (page === 'settings') loadSettings();
   });
 });
@@ -283,6 +284,337 @@ window.deleteCategory = async function(id, name) {
   await api('/api/categories/' + id, { method: 'DELETE' });
   await loadCategories();
 };
+
+// ---- Sales Analytics ----
+let salesMonths = [];
+let parsedCsvRows = [];
+
+async function loadSalesPage() {
+  // Load available months
+  salesMonths = await api('/api/sales/months');
+  const monthSelect = document.getElementById('sales-month');
+
+  if (Array.isArray(salesMonths) && salesMonths.length > 0) {
+    monthSelect.innerHTML = salesMonths.map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
+  } else {
+    // Default to current month
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    monthSelect.innerHTML = `<option value="${currentMonth}">${formatMonth(currentMonth)}</option>`;
+  }
+
+  loadSalesData();
+}
+
+async function loadSalesData() {
+  const month = document.getElementById('sales-month').value;
+  const type = document.getElementById('sales-type').value;
+  if (!month) return;
+
+  const summaryUrl = `/api/sales/summary?month=${month}`;
+  const summary = await api(summaryUrl);
+
+  if (summary.error) return;
+
+  renderKPIs(summary, type);
+  renderTypeBreakdown(summary.current, type);
+  renderBestsellers(summary.current, type);
+}
+
+function renderKPIs(summary, typeFilter) {
+  let cur = summary.current;
+  let prev = summary.previous;
+
+  // If type filter is active, use only that type's data
+  if (typeFilter) {
+    const ct = cur.byType[typeFilter] || { revenue: 0, orders: 0, items: 0 };
+    const pt = prev.byType[typeFilter] || { revenue: 0, orders: 0, items: 0 };
+    cur = { revenue: ct.revenue, orders: ct.orders, items: ct.items };
+    prev = { revenue: pt.revenue, orders: pt.orders, items: pt.items };
+  }
+
+  document.getElementById('kpi-revenue').textContent = '$' + formatNumber(cur.revenue);
+  document.getElementById('kpi-orders').textContent = formatNumber(cur.orders);
+  document.getElementById('kpi-items').textContent = formatNumber(cur.items);
+
+  setChangeIndicator('kpi-revenue-change', cur.revenue, prev.revenue);
+  setChangeIndicator('kpi-orders-change', cur.orders, prev.orders);
+  setChangeIndicator('kpi-items-change', cur.items, prev.items);
+}
+
+function setChangeIndicator(elementId, current, previous) {
+  const el = document.getElementById(elementId);
+  if (!previous || previous === 0) {
+    if (current > 0) {
+      el.textContent = 'חדש';
+      el.className = 'kpi-change neutral';
+    } else {
+      el.textContent = '';
+      el.className = 'kpi-change';
+    }
+    return;
+  }
+  const pct = ((current - previous) / previous * 100).toFixed(0);
+  if (pct > 0) {
+    el.textContent = `+${pct}% מהחודש הקודם`;
+    el.className = 'kpi-change positive';
+  } else if (pct < 0) {
+    el.textContent = `${pct}% מהחודש הקודם`;
+    el.className = 'kpi-change negative';
+  } else {
+    el.textContent = 'ללא שינוי';
+    el.className = 'kpi-change neutral';
+  }
+}
+
+function renderTypeBreakdown(data, typeFilter) {
+  const container = document.getElementById('type-breakdown');
+  const types = ['digital', 'pod', 'physical'];
+  const labels = { digital: 'דיגיטלי', pod: 'POD', physical: 'פיזי' };
+
+  if (!data.byType || Object.keys(data.byType).length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:1rem;">אין נתונים להצגה</div>';
+    return;
+  }
+
+  const maxRevenue = Math.max(...types.map(t => (data.byType[t]?.revenue || 0)));
+
+  container.innerHTML = types
+    .filter(t => !typeFilter || t === typeFilter)
+    .map(t => {
+      const info = data.byType[t] || { revenue: 0, orders: 0, items: 0 };
+      const pct = maxRevenue > 0 ? (info.revenue / maxRevenue * 100) : 0;
+      return `
+        <div class="type-row">
+          <div class="type-label">${labels[t]}</div>
+          <div class="type-bar-wrap">
+            <div class="type-bar ${t}" style="width:${pct}%"></div>
+          </div>
+          <div class="type-stats">
+            <strong>$${formatNumber(info.revenue)}</strong> · ${info.orders} הזמנות · ${info.items} פריטים
+          </div>
+        </div>
+      `;
+    }).join('');
+}
+
+function renderBestsellers(data, typeFilter) {
+  const container = document.getElementById('bestsellers-list');
+  let items = data.bestsellers || [];
+
+  // Note: bestsellers are already computed server-side from the full month data
+  // Type filtering on bestsellers would need per-item type info; skip for now since
+  // the server doesn't track listing_type per bestseller aggregation
+  if (!items.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:1rem;">אין נתונים להצגה</div>';
+    return;
+  }
+
+  container.innerHTML = items.map((item, i) => `
+    <div class="bestseller-item">
+      <div class="bestseller-rank">${i + 1}</div>
+      <div class="bestseller-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+      <div class="bestseller-qty">${item.quantity} יח'</div>
+      <div class="bestseller-rev">$${formatNumber(item.revenue)}</div>
+    </div>
+  `).join('');
+}
+
+// Sales filter listeners
+document.getElementById('sales-month').addEventListener('change', loadSalesData);
+document.getElementById('sales-type').addEventListener('change', loadSalesData);
+
+// CSV Upload Modal
+const csvModal = document.getElementById('csv-modal');
+
+document.getElementById('btn-upload-csv').addEventListener('click', () => {
+  // Reset modal state
+  document.getElementById('csv-file').value = '';
+  document.getElementById('csv-file-name').textContent = '';
+  document.getElementById('csv-preview').style.display = 'none';
+  document.getElementById('csv-import-result').style.display = 'none';
+  document.getElementById('btn-import-csv').disabled = true;
+  parsedCsvRows = [];
+
+  // Default month to current
+  const now = new Date();
+  document.getElementById('csv-month').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  csvModal.style.display = 'flex';
+});
+
+document.getElementById('btn-cancel-csv').addEventListener('click', () => {
+  csvModal.style.display = 'none';
+});
+
+csvModal.querySelector('.modal-backdrop').addEventListener('click', () => {
+  csvModal.style.display = 'none';
+});
+
+// CSV file handling
+document.getElementById('csv-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('csv-file-name').textContent = file.name;
+  parseCSVFile(file);
+});
+
+// Drag and drop
+const dropZone = document.getElementById('csv-drop-zone');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    document.getElementById('csv-file-name').textContent = file.name;
+    parseCSVFile(file);
+  }
+});
+
+function parseCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) return;
+
+    const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    parsedCsvRows = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      if (cols.length < 2) continue;
+
+      const row = {};
+      headers.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
+
+      // Map Etsy CSV columns to our schema
+      const mapped = mapEtsyRow(row);
+      if (mapped) parsedCsvRows.push(mapped);
+    }
+
+    document.getElementById('csv-row-count').textContent = `${parsedCsvRows.length} שורות זוהו בקובץ`;
+    document.getElementById('csv-preview').style.display = 'block';
+    document.getElementById('btn-import-csv').disabled = parsedCsvRows.length === 0;
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function mapEtsyRow(row) {
+  // Etsy EtsySoldOrderItems CSV known column names (case-insensitive matching)
+  const orderId = row['order id'] || row['sale id'] || row['transaction id'] || '';
+  const itemName = row['item name'] || row['title'] || row['item title'] || '';
+  const quantity = parseInt(row['quantity'] || row['number of items'] || '1', 10) || 1;
+  const priceStr = (row['price'] || row['item total'] || row['amount'] || '0').replace(/[^0-9.\-]/g, '');
+  const price = parseFloat(priceStr) || 0;
+  const discountStr = (row['discount amount'] || row['coupon discount'] || row['discount'] || '0').replace(/[^0-9.\-]/g, '');
+  const discount = parseFloat(discountStr) || 0;
+  const sku = row['sku'] || row['item sku'] || null;
+  const country = row['ship country'] || row['country'] || row['shipping country'] || null;
+  const saleDateRaw = row['date'] || row['sale date'] || row['date paid'] || row['order date'] || '';
+
+  if (!orderId || !itemName) return null;
+
+  // Parse date
+  let saleDate = '';
+  if (saleDateRaw) {
+    const d = new Date(saleDateRaw);
+    if (!isNaN(d.getTime())) {
+      saleDate = d.toISOString().split('T')[0];
+    }
+  }
+  if (!saleDate) {
+    saleDate = new Date().toISOString().split('T')[0];
+  }
+
+  // Guess listing type from item name keywords
+  let listingType = 'physical';
+  const nameLower = itemName.toLowerCase();
+  if (nameLower.includes('digital') || nameLower.includes('download') || nameLower.includes('printable') || nameLower.includes('svg') || nameLower.includes('pdf')) {
+    listingType = 'digital';
+  } else if (nameLower.includes('shirt') || nameLower.includes('hoodie') || nameLower.includes('mug') || nameLower.includes('tote') || nameLower.includes('poster') || nameLower.includes('print on demand') || nameLower.includes('pod')) {
+    listingType = 'pod';
+  }
+
+  return {
+    order_id: orderId,
+    item_name: itemName,
+    quantity,
+    price,
+    discount: discount || null,
+    sku,
+    listing_type: listingType,
+    country,
+    sale_date: saleDate,
+  };
+}
+
+// Import button
+document.getElementById('btn-import-csv').addEventListener('click', async () => {
+  const reportMonth = document.getElementById('csv-month').value;
+  if (!reportMonth || parsedCsvRows.length === 0) return;
+
+  const btn = document.getElementById('btn-import-csv');
+  btn.disabled = true;
+  btn.textContent = 'מייבא...';
+
+  const result = await api('/api/sales/import', {
+    method: 'POST',
+    body: { rows: parsedCsvRows, report_month: reportMonth },
+  });
+
+  const resultDiv = document.getElementById('csv-import-result');
+  resultDiv.style.display = 'block';
+
+  if (result.error) {
+    resultDiv.className = 'import-result error';
+    resultDiv.textContent = 'שגיאה: ' + result.error;
+  } else {
+    resultDiv.className = 'import-result success';
+    resultDiv.textContent = `יובאו ${result.imported} שורות בהצלחה. ${result.skipped > 0 ? `${result.skipped} כפילויות דולגו.` : ''}`;
+    // Refresh sales data
+    setTimeout(() => {
+      csvModal.style.display = 'none';
+      loadSalesPage();
+    }, 1500);
+  }
+
+  btn.textContent = 'ייבוא';
+  btn.disabled = false;
+});
+
+// Sales helpers
+function formatMonth(ym) {
+  const [y, m] = ym.split('-');
+  const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  return `${months[parseInt(m, 10) - 1]} ${y}`;
+}
+
+function formatNumber(n) {
+  if (n == null) return '0';
+  return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
 
 // ---- Util ----
 function escapeHtml(str) {

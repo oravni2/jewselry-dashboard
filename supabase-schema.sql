@@ -152,6 +152,25 @@ HANDLING DIFFICULT CUSTOMERS:
 - Stay warm even when firmly declining')
 ON CONFLICT (key) DO NOTHING;
 
+-- Etsy Sales table
+CREATE TABLE IF NOT EXISTS etsy_sales (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id text NOT NULL,
+  item_name text NOT NULL,
+  quantity integer NOT NULL DEFAULT 1,
+  price numeric NOT NULL DEFAULT 0,
+  discount numeric,
+  sku text,
+  listing_type text NOT NULL DEFAULT 'physical' CHECK (listing_type IN ('digital', 'pod', 'physical')),
+  country text,
+  sale_date date NOT NULL,
+  report_month text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(order_id, sku)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_etsy_sales_month ON etsy_sales(report_month);
+CREATE INDEX IF NOT EXISTS idx_etsy_sales_type ON etsy_sales(listing_type);
