@@ -319,6 +319,70 @@ app.post('/api/sales/import', async (req, res) => {
   res.json({ imported, skipped, errors: errors.slice(0, 5) });
 });
 
+// ---- LISTING GENERATOR API ----
+
+app.post('/api/listing/generate', async (req, res) => {
+  const { image, product_type, fields, notes } = req.body;
+  if (!image) return res.status(400).json({ error: 'Image is required' });
+  if (!product_type) return res.status(400).json({ error: 'Product type is required' });
+
+  // Fetch system prompt and keyword bank
+  const [promptRes, keywordsRes] = await Promise.all([
+    supabase.from('settings').select('value').eq('key', 'listing_system_prompt').single(),
+    supabase.from('settings').select('value').eq('key', 'keyword_bank').single(),
+  ]);
+
+  let systemPrompt = promptRes.data?.value || 'You are a listing generator for an Etsy jewelry store.';
+  const keywordBank = keywordsRes.data?.value || '[]';
+
+  // Inject keyword bank into prompt
+  systemPrompt = systemPrompt.replace('{keyword_bank}', keywordBank);
+
+  const productTypes = {
+    necklace: 'שרשרת', bracelet: 'צמיד', ring: 'טבעת',
+    challah_cover: 'כיסוי חלה', candles: 'נרות', tefillin_tallit: 'כיסוי תפילין/טלית',
+  };
+
+  let userText = `Product type: ${productTypes[product_type] || product_type}\n`;
+  if (fields && Object.keys(fields).length > 0) {
+    userText += 'Product details:\n';
+    for (const [key, val] of Object.entries(fields)) {
+      if (val) userText += `- ${key}: ${val}\n`;
+    }
+  }
+  if (notes) userText += `\nAdditional notes: ${notes}`;
+  userText += '\n\nPlease respond with valid JSON only: {"title":"...","description":"...","tags":"comma,separated,tags","warning":"...or null"}';
+
+  try {
+    // Strip data URL prefix if present
+    const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+    const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6-20250514',
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+          { type: 'text', text: userText },
+        ]
+      }]
+    });
+
+    const responseText = message.content[0].text;
+    // Parse JSON from response (handle markdown code blocks)
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Failed to parse AI response' });
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json(parsed);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

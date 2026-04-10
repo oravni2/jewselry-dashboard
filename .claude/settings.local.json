@@ -18,7 +18,13 @@
       "Read(//c/Program Files \\(x86\\)/GitHub CLI/**)",
       "Bash(git remote:*)",
       "Bash(git push:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(node -e ':*)",
+      "Bash(node scripts/insert-from-tsv.js)",
+      "Bash(python3 -c ':*)",
+      "Bash(python -c \"print\\('python works'\\)\")",
+      "Bash(node scripts/append-data.js)",
+      "Bash(node scripts/insert-all-keywords.js)"
     ]
   }
 }

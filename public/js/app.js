@@ -23,6 +23,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
 
     if (page === 'tasks') loadTasks();
     if (page === 'sales') loadSalesPage();
+    if (page === 'listing') initListingPage();
     if (page === 'settings') loadSettings();
   });
 });
@@ -198,6 +199,10 @@ async function loadSettings() {
   const promptData = await api('/api/settings/cs_system_prompt');
   document.getElementById('settings-prompt').value = promptData.error ? '' : (promptData.value || '');
 
+  // Load listing prompt
+  const listingPromptData = await api('/api/settings/listing_system_prompt');
+  document.getElementById('settings-listing-prompt').value = listingPromptData.error ? '' : (listingPromptData.value || '');
+
   // Load categories
   await loadCategories();
 }
@@ -209,6 +214,14 @@ document.getElementById('btn-save-prompt').addEventListener('click', async () =>
     body: { value },
   });
   const msg = document.getElementById('prompt-saved-msg');
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 2000);
+});
+
+document.getElementById('btn-save-listing-prompt').addEventListener('click', async () => {
+  const value = document.getElementById('settings-listing-prompt').value;
+  await api('/api/settings/listing_system_prompt', { method: 'PUT', body: { value } });
+  const msg = document.getElementById('listing-prompt-saved-msg');
   msg.style.display = 'inline';
   setTimeout(() => { msg.style.display = 'none'; }, 2000);
 });
@@ -742,6 +755,157 @@ function formatNumber(n) {
   if (n == null) return '0';
   return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
+
+// ---- Listing Generator ----
+let listingImageBase64 = null;
+
+function initListingPage() {
+  document.getElementById('listing-output').style.display = 'none';
+  document.getElementById('listing-loading').style.display = 'none';
+}
+
+// Product type dynamic fields
+const listingFieldDefs = {
+  necklace: [
+    { id: 'pendant_size', label: 'גודל תליון', type: 'text' },
+    { id: 'chain_length', label: 'אורך שרשרת', type: 'text' },
+    { id: 'material', label: 'חומר', type: 'text' },
+  ],
+  bracelet: [
+    { id: 'pendant_size', label: 'גודל תליון', type: 'text', optional: true },
+    { id: 'bracelet_length', label: 'אורך צמיד', type: 'text' },
+    { id: 'adjustable', label: 'סגירה מתכווננת', type: 'checkbox' },
+    { id: 'material', label: 'חומר', type: 'text' },
+  ],
+  ring: [
+    { id: 'material', label: 'חומר', type: 'text' },
+    { id: '_note', label: '', type: 'note', text: 'יש לפתוח VARIANTS של גדלי טבעת בנפרד' },
+  ],
+  challah_cover: [
+    { id: 'size', label: 'גודל', type: 'text' },
+    { id: 'material', label: 'חומר', type: 'text' },
+  ],
+  candles: [
+    { id: 'size', label: 'גודל', type: 'text' },
+  ],
+  tefillin_tallit: [
+    { id: 'size', label: 'גודל', type: 'text' },
+    { id: 'material', label: 'חומר', type: 'text' },
+  ],
+};
+
+document.getElementById('listing-product-type').addEventListener('change', (e) => {
+  const container = document.getElementById('listing-dynamic-fields');
+  const fields = listingFieldDefs[e.target.value];
+  if (!fields) { container.innerHTML = ''; return; }
+
+  container.innerHTML = fields.map(f => {
+    if (f.type === 'note') {
+      return `<div class="listing-note">${f.text}</div>`;
+    }
+    if (f.type === 'checkbox') {
+      return `<div class="form-group"><label class="toggle-label"><input type="checkbox" id="listing-field-${f.id}"><span class="toggle-switch"></span><span class="toggle-text">${f.label}</span></label></div>`;
+    }
+    return `<div class="form-group"><label for="listing-field-${f.id}">${f.label}${f.optional ? ' <span class="label-hint">(אופציונלי)</span>' : ''}</label><input type="text" id="listing-field-${f.id}"></div>`;
+  }).join('');
+});
+
+// Image upload
+const listingDropZone = document.getElementById('listing-drop-zone');
+const listingImageInput = document.getElementById('listing-image-input');
+
+listingDropZone.addEventListener('click', () => listingImageInput.click());
+listingDropZone.addEventListener('dragover', (e) => { e.preventDefault(); listingDropZone.classList.add('dragover'); });
+listingDropZone.addEventListener('dragleave', () => listingDropZone.classList.remove('dragover'));
+listingDropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  listingDropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleListingImage(file);
+});
+listingImageInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleListingImage(e.target.files[0]);
+});
+
+function handleListingImage(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    listingImageBase64 = e.target.result;
+    document.getElementById('listing-preview-img').src = listingImageBase64;
+    document.getElementById('listing-image-preview').style.display = 'block';
+    document.getElementById('listing-image-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Generate listing
+document.getElementById('btn-generate-listing').addEventListener('click', async () => {
+  const productType = document.getElementById('listing-product-type').value;
+  if (!listingImageBase64) return alert('יש להעלות תמונה');
+  if (!productType) return alert('יש לבחור סוג מוצר');
+
+  // Collect dynamic fields
+  const fieldDefs = listingFieldDefs[productType] || [];
+  const fields = {};
+  fieldDefs.forEach(f => {
+    if (f.type === 'note') return;
+    const el = document.getElementById('listing-field-' + f.id);
+    if (!el) return;
+    fields[f.label] = f.type === 'checkbox' ? (el.checked ? 'כן' : 'לא') : el.value;
+  });
+
+  const notes = document.getElementById('listing-notes').value.trim();
+  const btn = document.getElementById('btn-generate-listing');
+  const outputDiv = document.getElementById('listing-output');
+  const loadingDiv = document.getElementById('listing-loading');
+
+  btn.disabled = true;
+  outputDiv.style.display = 'none';
+  loadingDiv.style.display = 'flex';
+
+  try {
+    const result = await api('/api/listing/generate', {
+      method: 'POST',
+      body: { image: listingImageBase64, product_type: productType, fields, notes: notes || undefined },
+    });
+
+    if (result.error) { alert('שגיאה: ' + result.error); return; }
+
+    document.getElementById('listing-title-val').value = result.title || '';
+    document.getElementById('listing-desc-val').value = result.description || '';
+    document.getElementById('listing-tags-val').value = result.tags || '';
+
+    const warningDiv = document.getElementById('listing-warning');
+    if (result.warning) {
+      warningDiv.textContent = result.warning;
+      warningDiv.style.display = 'block';
+    } else {
+      warningDiv.style.display = 'none';
+    }
+
+    outputDiv.style.display = 'block';
+  } catch (err) {
+    alert('שגיאה: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    loadingDiv.style.display = 'none';
+  }
+});
+
+// Copy buttons for listing output
+document.querySelectorAll('.listing-copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.copy;
+    const el = document.getElementById(targetId);
+    const text = el.value || el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const textNode = btn.childNodes[btn.childNodes.length - 1];
+      const orig = textNode.textContent;
+      textNode.textContent = ' הועתק!';
+      setTimeout(() => { textNode.textContent = orig; }, 1500);
+    });
+  });
+});
 
 // ---- Util ----
 function escapeHtml(str) {

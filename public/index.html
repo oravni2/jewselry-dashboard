@@ -31,6 +31,10 @@
           <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
           <span>מכירות</span>
         </a>
+        <a href="#" class="nav-link" data-page="listing">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+          <span>מחולל ליסט</span>
+        </a>
         <a href="#" class="nav-link" data-page="settings">
           <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
           <span>הגדרות</span>
@@ -243,6 +247,96 @@
     </div>
   </div>
 
+  <!-- Listing Generator Page -->
+  <main id="page-listing" class="page">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1>מחולל ליסט</h1>
+        <p class="page-subtitle">יצירת ליסטינג ל-Etsy באמצעות AI</p>
+      </div>
+    </div>
+    <div class="listing-form">
+      <div class="card">
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label>תמונת מוצר</label>
+          <div class="listing-image-drop" id="listing-drop-zone">
+            <input type="file" id="listing-image-input" accept="image/*" class="file-input-hidden">
+            <div id="listing-image-preview" style="display:none;">
+              <img id="listing-preview-img" alt="">
+            </div>
+            <div id="listing-image-placeholder">
+              <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+              <span class="file-drop-text">לחץ או גרור תמונה לכאן</span>
+            </div>
+          </div>
+        </div>
+        <!-- Product Type -->
+        <div class="form-group">
+          <label for="listing-product-type">סוג מוצר</label>
+          <select id="listing-product-type">
+            <option value="">בחר סוג מוצר</option>
+            <option value="necklace">שרשרת</option>
+            <option value="bracelet">צמיד</option>
+            <option value="ring">טבעת</option>
+            <option value="challah_cover">כיסוי חלה</option>
+            <option value="candles">נרות</option>
+            <option value="tefillin_tallit">כיסוי תפילין/טלית</option>
+          </select>
+        </div>
+        <!-- Dynamic Fields -->
+        <div id="listing-dynamic-fields"></div>
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="listing-notes">הערות נוספות <span class="label-hint">(אופציונלי)</span></label>
+          <textarea id="listing-notes" rows="3" placeholder="פרטים נוספים על המוצר..."></textarea>
+        </div>
+        <!-- Generate Button -->
+        <button class="btn btn-primary btn-generate" id="btn-generate-listing">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+          צור ליסט
+        </button>
+      </div>
+      <div id="listing-loading" class="loading" style="display:none;"><span class="spinner"></span>מייצר ליסטינג...</div>
+      <!-- Output -->
+      <div id="listing-output" style="display:none;">
+        <div id="listing-warning" class="listing-warning" style="display:none;"></div>
+        <div class="card listing-result-card">
+          <div class="listing-field-group">
+            <div class="listing-field-header">
+              <label>כותרת</label>
+              <button class="btn btn-copy listing-copy-btn" data-copy="listing-title-val">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                העתק
+              </button>
+            </div>
+            <input type="text" id="listing-title-val" class="listing-output-field" readonly>
+          </div>
+          <div class="listing-field-group">
+            <div class="listing-field-header">
+              <label>תיאור</label>
+              <button class="btn btn-copy listing-copy-btn" data-copy="listing-desc-val">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                העתק
+              </button>
+            </div>
+            <textarea id="listing-desc-val" class="listing-output-field" rows="8" readonly></textarea>
+          </div>
+          <div class="listing-field-group">
+            <div class="listing-field-header">
+              <label>טאגים</label>
+              <button class="btn btn-copy listing-copy-btn" data-copy="listing-tags-val">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                העתק
+              </button>
+            </div>
+            <input type="text" id="listing-tags-val" class="listing-output-field" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <!-- Settings Page -->
   <main id="page-settings" class="page">
     <div class="page-header">
@@ -263,6 +357,23 @@
       <div class="card-footer">
         <button class="btn btn-primary" id="btn-save-prompt">שמור שינויים</button>
         <span id="prompt-saved-msg" class="saved-msg" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          נשמר!
+        </span>
+      </div>
+    </section>
+
+    <section class="settings-section card">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+        <h2>System Prompt - מחולל ליסט</h2>
+      </div>
+      <div class="form-group">
+        <textarea id="settings-listing-prompt" rows="10" class="mono-textarea"></textarea>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-primary" id="btn-save-listing-prompt">שמור שינויים</button>
+        <span id="listing-prompt-saved-msg" class="saved-msg" style="display:none;">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
           נשמר!
         </span>

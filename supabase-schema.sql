@@ -174,3 +174,6 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_etsy_sales_month ON etsy_sales(report_month);
 CREATE INDEX IF NOT EXISTS idx_etsy_sales_type ON etsy_sales(listing_type);
+
+-- Listing generator prompt
+INSERT INTO settings (key, value) VALUES ('listing_system_prompt', '') ON CONFLICT (key) DO NOTHING;
