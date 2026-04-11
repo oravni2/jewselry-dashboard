@@ -662,7 +662,7 @@ function parseCSVFile(file) {
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
     if (lines.length < 2) return;
 
-    const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    const headers = parseCSVLine(lines[0]).map(h => h.trim());
     parsedCsvRows = [];
 
     for (let i = 1; i < lines.length; i++) {
@@ -711,22 +711,23 @@ function detectListingType(sku) {
 }
 
 function mapEtsyRow(row) {
-  // Etsy EtsySoldOrderItems CSV known column names (case-insensitive matching)
-  const orderId = row['order id'] || row['sale id'] || row['transaction id'] || '';
-  const itemName = row['item name'] || row['title'] || row['item title'] || '';
-  const quantity = parseInt(row['quantity'] || row['number of items'] || '1', 10) || 1;
-  const priceStr = (row['price'] || row['item total'] || row['amount'] || '0').replace(/[^0-9.\-]/g, '');
+  // Etsy EtsySoldOrderItems CSV — exact column names
+  const orderId = row['Order ID'] || '';
+  const itemName = row['Item Name'] || '';
+  const quantity = parseInt(row['Quantity'] || '1', 10) || 1;
+  const priceStr = (row['Price'] || '0').replace(/[^0-9.\-]/g, '');
   const price = parseFloat(priceStr) || 0;
-  const discountStr = (row['discount amount'] || row['coupon discount'] || row['discount'] || '0').replace(/[^0-9.\-]/g, '');
+  const discountStr = (row['Discount Amount'] || '0').replace(/[^0-9.\-]/g, '');
   const discount = parseFloat(discountStr) || 0;
-  const sku = row['sku'] || row['item sku'] || null;
-  const country = row['ship country'] || row['country'] || row['shipping country'] || null;
-  const saleDateRaw = row['date'] || row['sale date'] || row['date paid'] || row['order date'] || '';
-  const shippingDiscountStr = (row['shipping discount'] || row['coupon shipping discount'] || '0').replace(/[^0-9.\-]/g, '');
+  const sku = row['SKU'] || null;
+  const country = row['Ship Country'] || null;
+  const saleDateRaw = row['Sale Date'] || '';
+  const shippingDiscountStr = (row['Shipping Discount'] || '0').replace(/[^0-9.\-]/g, '');
   const shippingDiscount = parseFloat(shippingDiscountStr) || null;
-  const orderShippingStr = (row['order shipping'] || row['shipping'] || '0').replace(/[^0-9.\-]/g, '');
+  const orderShippingStr = (row['Order Shipping'] || '0').replace(/[^0-9.\-]/g, '');
   const orderShipping = parseFloat(orderShippingStr) || null;
-  const variations = row['variations'] || row['item variations'] || null;
+  const variations = row['Variations'] || null;
+  const listingsType = row['Listings Type'] || null;
 
   if (!orderId || !itemName) return null;
 
@@ -742,8 +743,16 @@ function mapEtsyRow(row) {
     saleDate = new Date().toISOString().split('T')[0];
   }
 
-  // Detect listing type from SKU
-  const listingType = detectListingType(sku);
+  // Use Listings Type from CSV if available, otherwise detect from SKU
+  let listingType = 'physical';
+  if (listingsType) {
+    const lt = listingsType.toLowerCase();
+    if (lt === 'digital') listingType = 'digital';
+    else if (lt === 'physical') listingType = 'physical';
+    else listingType = detectListingType(sku);
+  } else {
+    listingType = detectListingType(sku);
+  }
 
   return {
     order_id: orderId,
