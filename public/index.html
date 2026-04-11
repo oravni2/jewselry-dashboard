@@ -123,11 +123,22 @@
         <h1>ניתוח מכירות</h1>
         <p class="page-subtitle">סיכום מכירות Etsy לפי חודש</p>
       </div>
-      <button class="btn btn-primary btn-add" id="btn-upload-csv">
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-        ייבוא CSV
-      </button>
     </div>
+
+    <!-- Tab Bar -->
+    <div class="sales-tab-bar">
+      <button class="sales-tab active" data-sales-tab="sales-content">מכירות</button>
+      <button class="sales-tab" data-sales-tab="tax-content">דוח מס</button>
+    </div>
+
+    <!-- Sales Tab Content -->
+    <div id="sales-content" class="sales-tab-content active">
+      <div class="tab-header">
+        <button class="btn btn-primary btn-add" id="btn-upload-csv">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          ייבוא CSV
+        </button>
+      </div>
 
     <!-- Filters -->
     <div class="sales-filters">
@@ -253,8 +264,117 @@
         </table>
       </div>
     </div>
+    </div>
+
+    <!-- Tax Report Tab Content -->
+    <div id="tax-content" class="sales-tab-content" style="display:none;">
+      <div class="tab-header">
+        <button class="btn btn-primary btn-add" id="btn-upload-payments">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          ייבוא Payments CSV
+        </button>
+      </div>
+
+      <!-- Tax Month Selector -->
+      <div class="sales-filters">
+        <div class="filter-group">
+          <label for="tax-month">חודש</label>
+          <select id="tax-month">
+            <option value="">בחר חודש</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tax KPI Cards -->
+      <div class="kpi-grid kpi-grid-6" id="tax-kpis">
+        <div class="kpi-card">
+          <div class="kpi-label">הכנסות POD</div>
+          <div class="kpi-value" id="tax-pod-net">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">הכנסות פיזי</div>
+          <div class="kpi-value" id="tax-physical-net">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">הזמנות ישראל</div>
+          <div class="kpi-value" id="tax-israel-net">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">סה"כ נטו</div>
+          <div class="kpi-value" id="tax-total-net">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">סה"כ עמלות</div>
+          <div class="kpi-value" id="tax-total-fees">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">מע"מ</div>
+          <div class="kpi-value" id="tax-total-vat">$0</div>
+        </div>
+      </div>
+
+      <!-- Tax Detail Table -->
+      <div class="card sales-section">
+        <div class="card-header">
+          <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z"/></svg>
+          <h2>פירוט תשלומים</h2>
+          <button class="btn btn-copy" id="btn-export-tax" style="margin-right:auto; margin-left:0;">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+            ייצוא Excel
+          </button>
+        </div>
+        <div class="diamond-table-wrap">
+          <table class="diamond-table" id="tax-detail-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>שם מוצר</th>
+                <th>סוג</th>
+                <th>מדינה</th>
+                <th>Gross</th>
+                <th>Net</th>
+                <th>עמלות</th>
+                <th>מע"מ</th>
+              </tr>
+            </thead>
+            <tbody id="tax-detail-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
   </main>
+
+  <!-- Payments Upload Modal -->
+  <div id="payments-modal" class="modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2>ייבוא דוח תשלומים Etsy</h2>
+      <div class="form-group">
+        <label for="payments-csv-month">חודש הדוח</label>
+        <input type="month" id="payments-csv-month">
+      </div>
+      <div class="form-group">
+        <label for="payments-csv-file">קובץ CSV</label>
+        <div class="file-drop-zone" id="payments-drop-zone">
+          <input type="file" id="payments-csv-file" accept=".csv" class="file-input-hidden">
+          <svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          <span class="file-drop-text">לחץ לבחירת קובץ או גרור לכאן</span>
+          <span class="file-drop-name" id="payments-file-name"></span>
+        </div>
+      </div>
+      <div id="payments-preview" class="csv-preview" style="display:none;">
+        <div class="csv-preview-info">
+          <span id="payments-row-count"></span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-import-payments" disabled>ייבוא</button>
+        <button class="btn btn-ghost" id="btn-cancel-payments">ביטול</button>
+      </div>
+      <div id="payments-import-result" class="import-result" style="display:none;"></div>
+    </div>
+  </div>
 
   <!-- CSV Upload Modal -->
   <div id="csv-modal" class="modal" style="display:none;">

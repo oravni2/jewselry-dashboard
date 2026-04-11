@@ -1302,6 +1302,57 @@ textarea.listing-output-field {
 }
 
 /* ============================================
+   Sales Tab Bar
+   ============================================ */
+.sales-tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--stone-200);
+}
+
+.sales-tab {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--stone-500);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.sales-tab:hover {
+  color: var(--stone-700);
+}
+
+.sales-tab.active {
+  color: var(--gold-700);
+  border-bottom-color: var(--gold-500);
+}
+
+.sales-tab-content {
+  display: none;
+}
+
+.sales-tab-content.active {
+  display: block;
+}
+
+.tab-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.kpi-grid-6 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ============================================
    Diamond Table
    ============================================ */
 .diamond-table-wrap {
@@ -1474,5 +1525,14 @@ textarea.listing-output-field {
 
   .bestseller-name {
     max-width: 140px;
+  }
+
+  .kpi-grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sales-tab {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.85rem;
   }
 }

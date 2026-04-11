@@ -302,18 +302,36 @@ window.deleteCategory = async function(id, name) {
 let salesMonths = [];
 let parsedCsvRows = [];
 
+// Sales tab switching
+document.querySelectorAll('.sales-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sales-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+    const target = document.getElementById(tab.dataset.salesTab);
+    target.classList.add('active');
+    target.style.display = 'block';
+
+    if (tab.dataset.salesTab === 'tax-content') loadTaxReport();
+  });
+});
+
 async function loadSalesPage() {
   // Load available months
   salesMonths = await api('/api/sales/months');
   const monthSelect = document.getElementById('sales-month');
 
+  const taxMonthSelect = document.getElementById('tax-month');
   if (Array.isArray(salesMonths) && salesMonths.length > 0) {
-    monthSelect.innerHTML = salesMonths.map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
+    const opts = salesMonths.map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
+    monthSelect.innerHTML = opts;
+    taxMonthSelect.innerHTML = '<option value="">בחר חודש</option>' + opts;
   } else {
     // Default to current month
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     monthSelect.innerHTML = `<option value="${currentMonth}">${formatMonth(currentMonth)}</option>`;
+    taxMonthSelect.innerHTML = `<option value="">בחר חודש</option><option value="${currentMonth}">${formatMonth(currentMonth)}</option>`;
   }
 
   loadSalesData();
@@ -815,6 +833,186 @@ function formatNumber(n) {
   if (n == null) return '0';
   return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
+
+// ---- Tax Report ----
+async function loadTaxReport() {
+  const month = document.getElementById('tax-month').value;
+  if (!month) return;
+
+  const data = await api(`/api/payments/tax-report?month=${month}`);
+  if (data.error) return;
+
+  const fmt = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  document.getElementById('tax-pod-net').textContent = fmt(data.podNet);
+  document.getElementById('tax-physical-net').textContent = fmt(data.physicalNet);
+  document.getElementById('tax-israel-net').textContent = fmt(data.israelNet);
+  document.getElementById('tax-total-net').textContent = fmt(data.totalNet);
+  document.getElementById('tax-total-fees').textContent = fmt(data.totalFees);
+  document.getElementById('tax-total-vat').textContent = fmt(data.totalVat);
+
+  // Detail table
+  const tbody = document.getElementById('tax-detail-body');
+  if (!data.detail || data.detail.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state" style="padding:1.5rem;">אין נתונים</td></tr>';
+    return;
+  }
+
+  const typeLabels = { digital: 'דיגיטלי', pod: 'POD', physical: 'פיזי' };
+  tbody.innerHTML = data.detail.map(r => `
+    <tr>
+      <td>${escapeHtml(r.order_id)}</td>
+      <td class="diamond-item-name" title="${escapeHtml(r.item_name)}">${escapeHtml(r.item_name)}</td>
+      <td>${typeLabels[r.listing_type] || r.listing_type || '-'}</td>
+      <td>${escapeHtml(r.country) || '-'}</td>
+      <td>$${Number(r.gross_amount).toFixed(2)}</td>
+      <td>$${Number(r.net_amount).toFixed(2)}</td>
+      <td>$${Number(r.fees).toFixed(2)}</td>
+      <td>$${Number(r.vat_amount).toFixed(2)}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('tax-month').addEventListener('change', loadTaxReport);
+
+// Export tax table to Excel
+document.getElementById('btn-export-tax').addEventListener('click', () => {
+  const table = document.getElementById('tax-detail-table');
+  if (!table) return;
+  const wb = XLSX.utils.table_to_book(table, { sheet: 'Tax Report' });
+  const month = document.getElementById('tax-month').value || 'export';
+  XLSX.writeFile(wb, `jewselry-tax-report-${month}.xlsx`);
+});
+
+// Payments CSV Upload Modal
+let parsedPaymentRows = [];
+const paymentsModal = document.getElementById('payments-modal');
+
+document.getElementById('btn-upload-payments').addEventListener('click', () => {
+  document.getElementById('payments-csv-file').value = '';
+  document.getElementById('payments-file-name').textContent = '';
+  document.getElementById('payments-preview').style.display = 'none';
+  document.getElementById('payments-import-result').style.display = 'none';
+  document.getElementById('btn-import-payments').disabled = true;
+  parsedPaymentRows = [];
+
+  const now = new Date();
+  document.getElementById('payments-csv-month').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  paymentsModal.style.display = 'flex';
+});
+
+document.getElementById('btn-cancel-payments').addEventListener('click', () => { paymentsModal.style.display = 'none'; });
+paymentsModal.querySelector('.modal-backdrop').addEventListener('click', () => { paymentsModal.style.display = 'none'; });
+
+// Payments CSV file handling
+document.getElementById('payments-csv-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('payments-file-name').textContent = file.name;
+  parsePaymentsCSV(file);
+});
+
+const paymentsDropZone = document.getElementById('payments-drop-zone');
+paymentsDropZone.addEventListener('dragover', (e) => { e.preventDefault(); paymentsDropZone.classList.add('dragover'); });
+paymentsDropZone.addEventListener('dragleave', () => paymentsDropZone.classList.remove('dragover'));
+paymentsDropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  paymentsDropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    document.getElementById('payments-file-name').textContent = file.name;
+    parsePaymentsCSV(file);
+  }
+});
+
+function parsePaymentsCSV(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) return;
+
+    const headers = parseCSVLine(lines[0]).map(h => h.trim());
+    parsedPaymentRows = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      if (cols.length < 2) continue;
+
+      const row = {};
+      headers.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
+
+      const mapped = mapPaymentRow(row);
+      if (mapped) parsedPaymentRows.push(mapped);
+    }
+
+    document.getElementById('payments-row-count').textContent = `${parsedPaymentRows.length} שורות זוהו בקובץ`;
+    document.getElementById('payments-preview').style.display = 'block';
+    document.getElementById('btn-import-payments').disabled = parsedPaymentRows.length === 0;
+  };
+  reader.readAsText(file);
+}
+
+function mapPaymentRow(row) {
+  const paymentId = row['Payment ID'] || '';
+  const orderId = row['Order ID'] || '';
+  if (!orderId) return null;
+
+  const parse = (v) => parseFloat((v || '0').replace(/[^0-9.\-]/g, '')) || 0;
+
+  const orderDateRaw = row['Order Date'] || '';
+  let orderDate = null;
+  if (orderDateRaw) {
+    const d = new Date(orderDateRaw);
+    if (!isNaN(d.getTime())) orderDate = d.toISOString().split('T')[0];
+  }
+
+  return {
+    payment_id: paymentId || null,
+    order_id: orderId,
+    gross_amount: parse(row['Gross Amount']),
+    fees: parse(row['Fees']),
+    net_amount: parse(row['Net Amount']),
+    vat_amount: parse(row['VAT Amount']),
+    currency: row['Currency'] || null,
+    listing_amount: parse(row['Listing Amount']),
+    listing_currency: row['Listing Currency'] || null,
+    exchange_rate: parse(row['Exchange Rate']) || null,
+    order_date: orderDate,
+  };
+}
+
+document.getElementById('btn-import-payments').addEventListener('click', async () => {
+  const reportMonth = document.getElementById('payments-csv-month').value;
+  if (!reportMonth || parsedPaymentRows.length === 0) return;
+
+  const btn = document.getElementById('btn-import-payments');
+  btn.disabled = true;
+  btn.textContent = 'מייבא...';
+
+  const result = await api('/api/payments/import', {
+    method: 'POST',
+    body: { rows: parsedPaymentRows, report_month: reportMonth },
+  });
+
+  const resultDiv = document.getElementById('payments-import-result');
+  resultDiv.style.display = 'block';
+
+  if (result.error) {
+    resultDiv.className = 'import-result error';
+    resultDiv.textContent = 'שגיאה: ' + result.error;
+  } else {
+    resultDiv.className = 'import-result success';
+    resultDiv.textContent = `יובאו ${result.imported} שורות בהצלחה. ${result.skipped > 0 ? `${result.skipped} כפילויות דולגו.` : ''}`;
+    setTimeout(() => {
+      paymentsModal.style.display = 'none';
+      loadTaxReport();
+    }, 1500);
+  }
+
+  btn.textContent = 'ייבוא';
+  btn.disabled = false;
+});
 
 // ---- Listing Generator ----
 let listingImageBase64 = null;

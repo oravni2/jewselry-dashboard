@@ -178,5 +178,29 @@ CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_etsy_sales_month ON etsy_sales(report_month);
 CREATE INDEX IF NOT EXISTS idx_etsy_sales_type ON etsy_sales(listing_type);
 
+-- Etsy Payments table
+CREATE TABLE IF NOT EXISTS etsy_payments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  payment_id text,
+  order_id text NOT NULL,
+  gross_amount numeric,
+  fees numeric,
+  net_amount numeric,
+  vat_amount numeric,
+  currency text,
+  listing_amount numeric,
+  listing_currency text,
+  exchange_rate numeric,
+  order_date date,
+  report_month text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(payment_id, report_month)
+);
+
+ALTER TABLE etsy_payments DISABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS idx_etsy_payments_month ON etsy_payments(report_month);
+CREATE INDEX IF NOT EXISTS idx_etsy_payments_order ON etsy_payments(order_id);
+
 -- Listing generator prompt
 INSERT INTO settings (key, value) VALUES ('listing_system_prompt', '') ON CONFLICT (key) DO NOTHING;

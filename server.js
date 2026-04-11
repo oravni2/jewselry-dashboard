@@ -326,6 +326,111 @@ app.post('/api/sales/import', async (req, res) => {
   res.json({ imported, skipped, errors: errors.slice(0, 5) });
 });
 
+// ---- PAYMENTS API ----
+
+app.post('/api/payments/import', async (req, res) => {
+  const { rows, report_month } = req.body;
+  if (!rows || !rows.length) return res.status(400).json({ error: 'No rows to import' });
+  if (!report_month) return res.status(400).json({ error: 'Report month is required' });
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const { data, error } = await supabase
+      .from('etsy_payments')
+      .upsert({
+        payment_id: row.payment_id,
+        order_id: row.order_id,
+        gross_amount: row.gross_amount,
+        fees: row.fees,
+        net_amount: row.net_amount,
+        vat_amount: row.vat_amount,
+        currency: row.currency,
+        listing_amount: row.listing_amount,
+        listing_currency: row.listing_currency,
+        exchange_rate: row.exchange_rate,
+        order_date: row.order_date,
+        report_month,
+      }, { onConflict: 'payment_id,report_month', ignoreDuplicates: true })
+      .select();
+
+    if (error) { skipped++; }
+    else if (data && data.length > 0) { imported++; }
+    else { skipped++; }
+  }
+
+  res.json({ imported, skipped });
+});
+
+app.get('/api/payments/tax-report', async (req, res) => {
+  const { month } = req.query;
+  if (!month) return res.status(400).json({ error: 'Month is required' });
+
+  // Fetch payments for the month
+  const { data: payments, error: pErr } = await supabase
+    .from('etsy_payments')
+    .select('*')
+    .eq('report_month', month)
+    .order('order_date', { ascending: false });
+
+  if (pErr) return res.status(500).json({ error: pErr.message });
+
+  // Fetch sales for the month (for type/country info)
+  const { data: sales } = await supabase
+    .from('etsy_sales')
+    .select('order_id, item_name, listing_type, country')
+    .eq('report_month', month);
+
+  // Build lookup: order_id -> first matching sale row
+  const salesMap = {};
+  (sales || []).forEach(s => {
+    if (!salesMap[s.order_id]) salesMap[s.order_id] = s;
+  });
+
+  // Categorize
+  let podNet = 0, physicalNet = 0, israelNet = 0;
+  let totalNet = 0, totalGross = 0, totalFees = 0, totalVat = 0;
+
+  const detail = (payments || []).map(p => {
+    const sale = salesMap[p.order_id] || {};
+    const net = Number(p.net_amount) || 0;
+    const gross = Number(p.gross_amount) || 0;
+    const fees = Number(p.fees) || 0;
+    const vat = Number(p.vat_amount) || 0;
+
+    totalNet += net;
+    totalGross += gross;
+    totalFees += fees;
+    totalVat += vat;
+
+    if (sale.listing_type === 'pod') podNet += net;
+    if (sale.listing_type === 'physical') physicalNet += net;
+    if (sale.country && sale.country.toLowerCase().includes('israel')) israelNet += net;
+
+    return {
+      order_id: p.order_id,
+      payment_id: p.payment_id,
+      item_name: sale.item_name || '',
+      listing_type: sale.listing_type || '',
+      country: sale.country || '',
+      gross_amount: gross,
+      net_amount: net,
+      fees,
+      vat_amount: vat,
+      currency: p.currency,
+      order_date: p.order_date,
+    };
+  });
+
+  res.json({
+    podNet, physicalNet, israelNet,
+    totalNet, totalGross, totalFees, totalVat,
+    currency: payments?.[0]?.currency || 'USD',
+    detail,
+  });
+});
+
 // ---- LISTING GENERATOR API ----
 
 app.post('/api/listing/generate', async (req, res) => {
