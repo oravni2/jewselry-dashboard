@@ -855,7 +855,8 @@ async function loadTaxReport() {
   const data = await api(`/api/payments/tax-report?month=${month}`);
   if (data.error) return;
 
-  const fmt = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const currencySymbol = data.currency === 'ILS' ? '₪' : data.currency === 'USD' ? '$' : (data.currency || '$') + ' ';
+  const fmt = (n) => currencySymbol + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   document.getElementById('tax-pod-net').textContent = fmt(data.podNet);
   document.getElementById('tax-physical-net').textContent = fmt(data.physicalNet);
@@ -878,10 +879,10 @@ async function loadTaxReport() {
       <td class="diamond-item-name" title="${escapeHtml(r.item_name)}">${escapeHtml(r.item_name)}</td>
       <td>${typeLabels[r.listing_type] || r.listing_type || '-'}</td>
       <td>${escapeHtml(r.country) || '-'}</td>
-      <td>$${Number(r.gross_amount).toFixed(2)}</td>
-      <td>$${Number(r.net_amount).toFixed(2)}</td>
-      <td>$${Number(r.fees).toFixed(2)}</td>
-      <td>$${Number(r.vat_amount).toFixed(2)}</td>
+      <td>${currencySymbol}${Number(r.gross_amount).toFixed(2)}</td>
+      <td>${currencySymbol}${Number(r.net_amount).toFixed(2)}</td>
+      <td>${currencySymbol}${Number(r.fees).toFixed(2)}</td>
+      <td>${currencySymbol}${Number(r.vat_amount).toFixed(2)}</td>
     </tr>
   `).join('');
 }
