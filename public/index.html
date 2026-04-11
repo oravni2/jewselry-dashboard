@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <!-- Navigation -->
@@ -147,6 +148,15 @@
       </div>
     </div>
 
+    <!-- Diamond Toggle -->
+    <div class="filters-bar">
+      <label class="toggle-label">
+        <input type="checkbox" id="sales-diamond-filter">
+        <span class="toggle-switch"></span>
+        <span class="toggle-text">הצג יהלומים בלבד</span>
+      </label>
+    </div>
+
     <!-- KPI Cards -->
     <div class="kpi-grid" id="sales-kpis">
       <div class="kpi-card">
@@ -214,6 +224,36 @@
         <div class="empty-state">אין נתונים להצגה</div>
       </div>
     </div>
+
+    <!-- Diamond Orders Table -->
+    <div id="diamond-section" class="card sales-section" style="display:none;">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2L3 9h4v7h6V9h4L10 2z"/></svg>
+        <h2>הזמנות יהלומים</h2>
+        <button class="btn btn-copy" id="btn-export-diamonds" style="margin-right:auto; margin-left:0;">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          ייצוא Excel
+        </button>
+      </div>
+      <div class="diamond-table-wrap">
+        <table class="diamond-table" id="diamond-table">
+          <thead>
+            <tr>
+              <th>תאריך</th>
+              <th>שם מוצר</th>
+              <th>כמות</th>
+              <th>מחיר</th>
+              <th>הנחה</th>
+              <th>הנחת משלוח</th>
+              <th>משלוח</th>
+              <th>וריאציות</th>
+            </tr>
+          </thead>
+          <tbody id="diamond-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
   </main>
 
   <!-- CSV Upload Modal -->

@@ -322,9 +322,11 @@ async function loadSalesPage() {
 async function loadSalesData() {
   const month = document.getElementById('sales-month').value;
   const type = document.getElementById('sales-type').value;
+  const diamond = document.getElementById('sales-diamond-filter').checked;
   if (!month) return;
 
-  const summaryUrl = `/api/sales/summary?month=${month}`;
+  let summaryUrl = `/api/sales/summary?month=${month}`;
+  if (diamond) summaryUrl += '&diamond=true';
   const summary = await api(summaryUrl);
 
   if (summary.error) return;
@@ -336,9 +338,19 @@ async function loadSalesData() {
   // Fetch raw rows for daily chart
   let salesUrl = `/api/sales?month=${month}`;
   if (type) salesUrl += `&listing_type=${type}`;
+  if (diamond) salesUrl += '&diamond=true';
   const salesRows = await api(salesUrl);
   renderDailyChart(salesRows, month);
   renderCountryBreakdown(salesRows);
+
+  // Diamond table
+  const diamondSection = document.getElementById('diamond-section');
+  if (diamond) {
+    renderDiamondTable(salesRows);
+    diamondSection.style.display = 'block';
+  } else {
+    diamondSection.style.display = 'none';
+  }
 }
 
 function renderKPIs(summary, typeFilter) {
@@ -562,6 +574,37 @@ function renderDailyChart(rows, month) {
 // Sales filter listeners
 document.getElementById('sales-month').addEventListener('change', loadSalesData);
 document.getElementById('sales-type').addEventListener('change', loadSalesData);
+document.getElementById('sales-diamond-filter').addEventListener('change', loadSalesData);
+
+// Diamond table
+function renderDiamondTable(rows) {
+  const tbody = document.getElementById('diamond-table-body');
+  if (!Array.isArray(rows) || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state" style="padding:1.5rem;">אין הזמנות יהלומים בחודש זה</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.sale_date ? new Date(r.sale_date).toLocaleDateString('he-IL') : ''}</td>
+      <td class="diamond-item-name" title="${escapeHtml(r.item_name)}">${escapeHtml(r.item_name)}</td>
+      <td>${r.quantity}</td>
+      <td>$${Number(r.price).toFixed(2)}</td>
+      <td>${r.discount ? '$' + Number(r.discount).toFixed(2) : '-'}</td>
+      <td>${r.shipping_discount ? '$' + Number(r.shipping_discount).toFixed(2) : '-'}</td>
+      <td>${r.order_shipping ? '$' + Number(r.order_shipping).toFixed(2) : '-'}</td>
+      <td class="diamond-variations">${r.variations ? escapeHtml(r.variations) : '-'}</td>
+    </tr>
+  `).join('');
+}
+
+// Export diamonds to Excel
+document.getElementById('btn-export-diamonds').addEventListener('click', () => {
+  const table = document.getElementById('diamond-table');
+  if (!table) return;
+  const wb = XLSX.utils.table_to_book(table, { sheet: 'Diamonds' });
+  const month = document.getElementById('sales-month').value || 'export';
+  XLSX.writeFile(wb, `jewselry-diamonds-${month}.xlsx`);
+});
 
 // CSV Upload Modal
 const csvModal = document.getElementById('csv-modal');
@@ -679,6 +722,11 @@ function mapEtsyRow(row) {
   const sku = row['sku'] || row['item sku'] || null;
   const country = row['ship country'] || row['country'] || row['shipping country'] || null;
   const saleDateRaw = row['date'] || row['sale date'] || row['date paid'] || row['order date'] || '';
+  const shippingDiscountStr = (row['shipping discount'] || row['coupon shipping discount'] || '0').replace(/[^0-9.\-]/g, '');
+  const shippingDiscount = parseFloat(shippingDiscountStr) || null;
+  const orderShippingStr = (row['order shipping'] || row['shipping'] || '0').replace(/[^0-9.\-]/g, '');
+  const orderShipping = parseFloat(orderShippingStr) || null;
+  const variations = row['variations'] || row['item variations'] || null;
 
   if (!orderId || !itemName) return null;
 
@@ -707,6 +755,9 @@ function mapEtsyRow(row) {
     listing_type: listingType,
     country,
     sale_date: saleDate,
+    shipping_discount: shippingDiscount,
+    order_shipping: orderShipping,
+    variations,
   };
 }
 

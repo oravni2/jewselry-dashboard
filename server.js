@@ -196,7 +196,7 @@ app.post('/api/cs/generate', async (req, res) => {
 
 // Get sales with optional filters
 app.get('/api/sales', async (req, res) => {
-  const { month, listing_type } = req.query;
+  const { month, listing_type, diamond } = req.query;
   let query = supabase
     .from('etsy_sales')
     .select('*')
@@ -204,6 +204,7 @@ app.get('/api/sales', async (req, res) => {
 
   if (month) query = query.eq('report_month', month);
   if (listing_type) query = query.eq('listing_type', listing_type);
+  if (diamond === 'true') query = query.ilike('item_name', '%diamond%');
 
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
@@ -212,7 +213,7 @@ app.get('/api/sales', async (req, res) => {
 
 // Get sales summary/stats for a month (and previous month for comparison)
 app.get('/api/sales/summary', async (req, res) => {
-  const { month } = req.query;
+  const { month, diamond } = req.query;
   if (!month) return res.status(400).json({ error: 'Month is required (YYYY-MM)' });
 
   // Parse previous month
@@ -221,10 +222,13 @@ app.get('/api/sales/summary', async (req, res) => {
   const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
   // Fetch current and previous month data
-  const [current, previous] = await Promise.all([
-    supabase.from('etsy_sales').select('*').eq('report_month', month),
-    supabase.from('etsy_sales').select('*').eq('report_month', prevMonth),
-  ]);
+  let curQuery = supabase.from('etsy_sales').select('*').eq('report_month', month);
+  let prevQuery = supabase.from('etsy_sales').select('*').eq('report_month', prevMonth);
+  if (diamond === 'true') {
+    curQuery = curQuery.ilike('item_name', '%diamond%');
+    prevQuery = prevQuery.ilike('item_name', '%diamond%');
+  }
+  const [current, previous] = await Promise.all([curQuery, prevQuery]);
 
   if (current.error) return res.status(500).json({ error: current.error.message });
 
@@ -303,6 +307,9 @@ app.post('/api/sales/import', async (req, res) => {
         country: row.country || null,
         sale_date: row.sale_date,
         report_month,
+        shipping_discount: row.shipping_discount || null,
+        order_shipping: row.order_shipping || null,
+        variations: row.variations || null,
       }, { onConflict: 'order_id,sku', ignoreDuplicates: true })
       .select();
 

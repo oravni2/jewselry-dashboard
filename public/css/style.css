@@ -1302,6 +1302,60 @@ textarea.listing-output-field {
 }
 
 /* ============================================
+   Diamond Table
+   ============================================ */
+.diamond-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.diamond-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.diamond-table thead {
+  background: var(--stone-100);
+}
+
+.diamond-table th {
+  padding: 0.6rem 0.75rem;
+  font-weight: 600;
+  color: var(--stone-600);
+  text-align: right;
+  border-bottom: 2px solid var(--stone-200);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.diamond-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--stone-100);
+  color: var(--stone-700);
+}
+
+.diamond-table tbody tr:hover {
+  background: var(--stone-50);
+}
+
+.diamond-item-name {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diamond-variations {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+  color: var(--stone-500);
+}
+
+/* ============================================
    Animations
    ============================================ */
 @keyframes spin {

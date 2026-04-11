@@ -166,6 +166,9 @@ CREATE TABLE IF NOT EXISTS etsy_sales (
   sale_date date NOT NULL,
   report_month text NOT NULL,
   created_at timestamptz DEFAULT now(),
+  shipping_discount numeric,
+  order_shipping numeric,
+  variations text,
   UNIQUE(order_id, sku)
 );
 
