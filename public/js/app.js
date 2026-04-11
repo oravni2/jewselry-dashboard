@@ -24,6 +24,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
     if (page === 'tasks') loadTasks();
     if (page === 'sales') loadSalesPage();
     if (page === 'listing') initListingPage();
+    if (page === 'pod') loadPodPage();
     if (page === 'settings') loadSettings();
   });
 });
@@ -203,6 +204,10 @@ async function loadSettings() {
   const listingPromptData = await api('/api/settings/listing_system_prompt');
   document.getElementById('settings-listing-prompt').value = listingPromptData.error ? '' : (listingPromptData.value || '');
 
+  // Load Printify token
+  const printifyData = await api('/api/settings/printify_api_token');
+  document.getElementById('settings-printify-token').value = printifyData.error ? '' : (printifyData.value || '');
+
   // Load categories
   await loadCategories();
 }
@@ -214,6 +219,14 @@ document.getElementById('btn-save-prompt').addEventListener('click', async () =>
     body: { value },
   });
   const msg = document.getElementById('prompt-saved-msg');
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 2000);
+});
+
+document.getElementById('btn-save-printify-token').addEventListener('click', async () => {
+  const value = document.getElementById('settings-printify-token').value;
+  await api('/api/settings/printify_api_token', { method: 'PUT', body: { value } });
+  const msg = document.getElementById('printify-token-saved-msg');
   msg.style.display = 'inline';
   setTimeout(() => { msg.style.display = 'none'; }, 2000);
 });
@@ -1163,6 +1176,181 @@ document.querySelectorAll('.listing-copy-btn').forEach(btn => {
       setTimeout(() => { textNode.textContent = orig; }, 1500);
     });
   });
+});
+
+// ---- POD (Print on Demand) ----
+let podImageBase64 = null;
+let podBlueprints = [];
+let podSelectedBlueprints = new Set();
+
+const POD_FILTER_KEYWORDS = ['t-shirt', 'tee', 'unisex', 'hoodie', 'sweatshirt', 'mug', 'tote', 'poster', 'canvas', 'bag', 'tank top'];
+
+async function loadPodPage() {
+  podSelectedBlueprints.clear();
+  document.getElementById('pod-results').style.display = 'none';
+  document.getElementById('pod-loading').style.display = 'none';
+
+  const grid = document.getElementById('pod-blueprints-grid');
+  grid.innerHTML = '<div class="loading"><span class="spinner"></span>טוען מוצרים...</div>';
+
+  const data = await api('/api/printify/blueprints');
+  if (data.error) {
+    grid.innerHTML = `<div class="empty-state">${escapeHtml(data.error)}</div>`;
+    return;
+  }
+
+  // Filter to common product types
+  podBlueprints = (Array.isArray(data) ? data : []).filter(bp => {
+    const title = (bp.title || '').toLowerCase();
+    return POD_FILTER_KEYWORDS.some(kw => title.includes(kw));
+  }).slice(0, 30);
+
+  if (!podBlueprints.length) {
+    grid.innerHTML = '<div class="empty-state">לא נמצאו מוצרים. וודא שה-API Token מוגדר בהגדרות.</div>';
+    return;
+  }
+
+  grid.innerHTML = podBlueprints.map(bp => {
+    const img = bp.images && bp.images.length > 0 ? bp.images[0] : '';
+    return `
+      <div class="pod-blueprint-card" data-bp-id="${bp.id}" onclick="togglePodBlueprint(${bp.id})">
+        ${img ? `<img class="pod-blueprint-img" src="${img}" alt="${escapeHtml(bp.title)}">` : '<div class="pod-blueprint-img"></div>'}
+        <div class="pod-blueprint-name" title="${escapeHtml(bp.title)}">${escapeHtml(bp.title)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.togglePodBlueprint = function(id) {
+  if (podSelectedBlueprints.has(id)) {
+    podSelectedBlueprints.delete(id);
+  } else {
+    podSelectedBlueprints.add(id);
+  }
+  // Update UI
+  document.querySelectorAll('.pod-blueprint-card').forEach(card => {
+    const bpId = parseInt(card.dataset.bpId, 10);
+    card.classList.toggle('selected', podSelectedBlueprints.has(bpId));
+  });
+};
+
+// POD image upload
+const podDropZone = document.getElementById('pod-drop-zone');
+const podImageInput = document.getElementById('pod-image-input');
+
+podDropZone.addEventListener('click', () => podImageInput.click());
+podDropZone.addEventListener('dragover', (e) => { e.preventDefault(); podDropZone.classList.add('dragover'); });
+podDropZone.addEventListener('dragleave', () => podDropZone.classList.remove('dragover'));
+podDropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  podDropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handlePodImage(file);
+});
+podImageInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handlePodImage(e.target.files[0]);
+});
+
+function handlePodImage(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    podImageBase64 = e.target.result;
+    document.getElementById('pod-preview-img').src = podImageBase64;
+    document.getElementById('pod-image-preview').style.display = 'block';
+    document.getElementById('pod-image-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Create POD products
+document.getElementById('btn-create-pod').addEventListener('click', async () => {
+  if (!podImageBase64) return alert('יש להעלות עיצוב');
+  if (podSelectedBlueprints.size === 0) return alert('יש לבחור לפחות מוצר אחד');
+
+  const title = document.getElementById('pod-title').value.trim();
+  const description = document.getElementById('pod-description').value.trim();
+  if (!title) return alert('יש להזין כותרת');
+
+  const btn = document.getElementById('btn-create-pod');
+  const loadingDiv = document.getElementById('pod-loading');
+  const resultsDiv = document.getElementById('pod-results');
+
+  btn.disabled = true;
+  loadingDiv.style.display = 'flex';
+  resultsDiv.style.display = 'none';
+
+  try {
+    // Step 1: Upload image to Printify
+    const uploadRes = await api('/api/printify/upload-image', {
+      method: 'POST',
+      body: { image: podImageBase64, filename: 'design.png' },
+    });
+
+    if (uploadRes.error) { alert('שגיאה בהעלאת תמונה: ' + uploadRes.error); return; }
+    const imageId = uploadRes.id;
+
+    // Step 2: Create products for each selected blueprint
+    const results = [];
+    for (const bpId of podSelectedBlueprints) {
+      const bp = podBlueprints.find(b => b.id === bpId);
+      if (!bp) continue;
+
+      // Get print providers for this blueprint
+      const providers = await api(`/api/printify/blueprints/${bpId}/variants`);
+      if (providers.error || !Array.isArray(providers) || providers.length === 0) {
+        results.push({ title: bp.title, error: 'No print providers available' });
+        continue;
+      }
+
+      // Use first provider
+      const provider = providers[0];
+
+      // Get variants for this provider
+      const variantsRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${bpId}/print_providers/${provider.id}/variants.json`);
+
+      // Create product
+      const createRes = await api('/api/printify/create-product', {
+        method: 'POST',
+        body: {
+          title: title,
+          description: description,
+          blueprint_id: bpId,
+          print_provider_id: provider.id,
+          variants: (provider.variants || []).slice(0, 20).map(v => ({ id: v.id, price: 0, is_enabled: true })),
+          image_id: imageId,
+        },
+      });
+
+      if (createRes.error) {
+        results.push({ title: bp.title, error: createRes.error });
+      } else {
+        results.push({ title: bp.title, id: createRes.id, success: true });
+      }
+    }
+
+    // Show results
+    const resultsList = document.getElementById('pod-results-list');
+    resultsList.innerHTML = results.map(r => {
+      if (r.success) {
+        return `<div class="pod-result-item">
+          <span class="pod-result-name">${escapeHtml(r.title)}</span>
+          <a class="pod-result-link" href="https://printify.com/app/editor/${r.id}" target="_blank">פתח בפרינטיפיי</a>
+        </div>`;
+      } else {
+        return `<div class="pod-result-item">
+          <span class="pod-result-name">${escapeHtml(r.title)}</span>
+          <span style="color:var(--red-600); font-size:0.82rem;">${escapeHtml(r.error)}</span>
+        </div>`;
+      }
+    }).join('');
+
+    resultsDiv.style.display = 'block';
+  } catch (err) {
+    alert('שגיאה: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    loadingDiv.style.display = 'none';
+  }
 });
 
 // ---- Util ----

@@ -431,6 +431,105 @@ app.get('/api/payments/tax-report', async (req, res) => {
   });
 });
 
+// ---- PRINTIFY API ----
+
+// In-memory cache for blueprints
+let blueprintsCache = null;
+let blueprintsCacheTime = 0;
+const BLUEPRINTS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function getPrintifyToken() {
+  // Try env first, then DB setting
+  if (process.env.PRINTIFY_API_TOKEN) return process.env.PRINTIFY_API_TOKEN;
+  const { data } = await supabase.from('settings').select('value').eq('key', 'printify_api_token').single();
+  return data?.value || null;
+}
+
+app.get('/api/printify/blueprints', async (req, res) => {
+  // Check cache
+  if (blueprintsCache && (Date.now() - blueprintsCacheTime < BLUEPRINTS_CACHE_TTL)) {
+    return res.json(blueprintsCache);
+  }
+  const token = await getPrintifyToken();
+  if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
+  try {
+    const response = await fetch('https://api.printify.com/v1/catalog/blueprints.json', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!response.ok) return res.status(response.status).json({ error: 'Printify API error: ' + response.statusText });
+    const data = await response.json();
+    blueprintsCache = data;
+    blueprintsCacheTime = Date.now();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/printify/blueprints/:blueprintId/variants', async (req, res) => {
+  const token = await getPrintifyToken();
+  if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
+  try {
+    const response = await fetch(`https://api.printify.com/v1/catalog/blueprints/${req.params.blueprintId}/print_providers.json`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!response.ok) return res.status(response.status).json({ error: 'Printify API error' });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/printify/upload-image', async (req, res) => {
+  const { image, filename } = req.body;
+  const token = await getPrintifyToken();
+  if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
+  try {
+    const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+    const response = await fetch('https://api.printify.com/v1/uploads/images.json', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_name: filename || 'design.png', contents: base64Data })
+    });
+    if (!response.ok) return res.status(response.status).json({ error: 'Printify upload failed' });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/printify/create-product', async (req, res) => {
+  const { title, description, blueprint_id, print_provider_id, variants, image_id } = req.body;
+  const token = await getPrintifyToken();
+  const shopId = process.env.PRINTIFY_SHOP_ID;
+  if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
+  if (!shopId) return res.status(400).json({ error: 'PRINTIFY_SHOP_ID not configured' });
+  try {
+    const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        description,
+        blueprint_id,
+        print_provider_id,
+        variants,
+        print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: [{ position: 'front', images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] }] }]
+      })
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return res.status(response.status).json({ error: errData.message || 'Printify create failed' });
+    }
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- LISTING GENERATOR API ----
 
 app.post('/api/listing/generate', async (req, res) => {

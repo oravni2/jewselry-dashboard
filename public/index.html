@@ -36,6 +36,10 @@
           <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
           <span>מחולל ליסט</span>
         </a>
+        <a href="#" class="nav-link" data-page="pod">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+          <span>POD</span>
+        </a>
         <a href="#" class="nav-link" data-page="settings">
           <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
           <span>הגדרות</span>
@@ -497,6 +501,73 @@
     </div>
   </main>
 
+  <!-- POD Page -->
+  <main id="page-pod" class="page">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1>POD - Print on Demand</h1>
+        <p class="page-subtitle">יצירת מוצרים בפרינטיפיי</p>
+      </div>
+    </div>
+    <div class="pod-wizard">
+      <!-- Step 1: Upload Design -->
+      <div class="card pod-step" id="pod-step-1">
+        <div class="pod-step-header">
+          <span class="pod-step-num">1</span>
+          <h3>העלאת עיצוב</h3>
+        </div>
+        <div class="listing-image-drop" id="pod-drop-zone">
+          <input type="file" id="pod-image-input" accept="image/*" class="file-input-hidden">
+          <div id="pod-image-preview" style="display:none;">
+            <img id="pod-preview-img" alt="">
+          </div>
+          <div id="pod-image-placeholder">
+            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+            <span class="file-drop-text">לחץ או גרור עיצוב לכאן</span>
+          </div>
+        </div>
+      </div>
+      <!-- Step 2: Select Products -->
+      <div class="card pod-step" id="pod-step-2">
+        <div class="pod-step-header">
+          <span class="pod-step-num">2</span>
+          <h3>בחירת מוצרים</h3>
+        </div>
+        <div id="pod-blueprints-grid" class="pod-blueprints-grid">
+          <div class="loading"><span class="spinner"></span>טוען מוצרים...</div>
+        </div>
+      </div>
+      <!-- Step 3: Product Details -->
+      <div class="card pod-step" id="pod-step-3">
+        <div class="pod-step-header">
+          <span class="pod-step-num">3</span>
+          <h3>פרטי המוצר</h3>
+        </div>
+        <div class="form-group">
+          <label for="pod-title">כותרת</label>
+          <input type="text" id="pod-title" placeholder="שם המוצר...">
+        </div>
+        <div class="form-group">
+          <label for="pod-description">תיאור</label>
+          <textarea id="pod-description" rows="4" placeholder="תיאור המוצר..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-generate" id="btn-create-pod">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+          צור מוצרים בפרינטיפיי
+        </button>
+      </div>
+      <!-- Loading & Results -->
+      <div id="pod-loading" class="loading" style="display:none;"><span class="spinner"></span>יוצר מוצרים...</div>
+      <div id="pod-results" class="card pod-step" style="display:none;">
+        <div class="pod-step-header">
+          <span class="pod-step-num pod-step-success">✓</span>
+          <h3>מוצרים נוצרו בהצלחה</h3>
+        </div>
+        <div id="pod-results-list" class="pod-results-list"></div>
+      </div>
+    </div>
+  </main>
+
   <!-- Settings Page -->
   <main id="page-settings" class="page">
     <div class="page-header">
@@ -534,6 +605,23 @@
       <div class="card-footer">
         <button class="btn btn-primary" id="btn-save-listing-prompt">שמור שינויים</button>
         <span id="listing-prompt-saved-msg" class="saved-msg" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          נשמר!
+        </span>
+      </div>
+    </section>
+
+    <section class="settings-section card">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+        <h2>Printify API Token</h2>
+      </div>
+      <div class="form-group">
+        <input type="password" id="settings-printify-token" class="mono-textarea" placeholder="Printify API token...">
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-primary" id="btn-save-printify-token">שמור</button>
+        <span id="printify-token-saved-msg" class="saved-msg" style="display:none;">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
           נשמר!
         </span>
