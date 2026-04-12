@@ -1055,9 +1055,12 @@ document.getElementById('btn-send-accountant').addEventListener('click', async (
     msg.style.color = 'var(--red-600)';
     msg.textContent = result.error;
   } else {
+    // Open mailto link
+    const mailto = `mailto:${encodeURIComponent(result.email)}?subject=${encodeURIComponent(result.subject)}&body=${encodeURIComponent(result.body)}`;
+    window.open(mailto, '_blank');
     msg.style.display = 'inline';
     msg.style.color = 'var(--green-600)';
-    msg.textContent = 'אימייל נשלח בהצלחה';
+    msg.textContent = 'נפתח חלון אימייל';
   }
   setTimeout(() => { msg.style.display = 'none'; }, 4000);
   btn.disabled = false;
