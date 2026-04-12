@@ -379,13 +379,14 @@ app.get('/api/payments/tax-report', async (req, res) => {
   // Fetch sales for the month (for type/country info)
   const { data: sales } = await supabase
     .from('etsy_sales')
-    .select('order_id, item_name, listing_type, country')
+    .select('order_id, item_name, listing_type, country, price, quantity')
     .eq('report_month', month);
 
-  // Build lookup: order_id -> first matching sale row
+  // Build lookup: order_id -> ALL matching sale rows
   const salesMap = {};
   (sales || []).forEach(s => {
-    if (!salesMap[s.order_id]) salesMap[s.order_id] = s;
+    if (!salesMap[s.order_id]) salesMap[s.order_id] = [];
+    salesMap[s.order_id].push(s);
   });
 
   // Categorize
@@ -393,7 +394,6 @@ app.get('/api/payments/tax-report', async (req, res) => {
   let totalNet = 0, totalGross = 0, totalFees = 0, totalVat = 0;
 
   const detail = (payments || []).map(p => {
-    const sale = salesMap[p.order_id] || {};
     const net = Number(p.net_amount) || 0;
     const gross = Number(p.gross_amount) || 0;
     const fees = Number(p.fees) || 0;
@@ -404,16 +404,32 @@ app.get('/api/payments/tax-report', async (req, res) => {
     totalFees += fees;
     totalVat += vat;
 
-    if (sale.listing_type === 'pod') podNet += net;
-    if (sale.listing_type === 'physical') physicalNet += net;
-    if (sale.country && sale.country.toLowerCase().includes('israel')) israelNet += net;
+    // Split net proportionally across all items in this order
+    const orderItems = salesMap[p.order_id] || [];
+    if (orderItems.length > 0) {
+      const totalOrderPrice = orderItems.reduce((sum, s) => sum + (Number(s.price) * (s.quantity || 1)), 0);
+      orderItems.forEach(s => {
+        const itemPrice = Number(s.price) * (s.quantity || 1);
+        const share = totalOrderPrice > 0 ? (itemPrice / totalOrderPrice) * net : net / orderItems.length;
+        if (s.listing_type === 'pod') podNet += share;
+        if (s.listing_type === 'physical') physicalNet += share;
+        if (s.country && s.country.toLowerCase().includes('israel')) israelNet += share;
+      });
+    }
+
+    // Use first item for display in detail table
+    const firstItem = orderItems[0] || {};
 
     return {
       order_id: p.order_id,
       payment_id: p.payment_id,
-      item_name: sale.item_name || '',
-      listing_type: sale.listing_type || '',
-      country: sale.country || '',
+      item_name: orderItems.length > 1
+        ? firstItem.item_name + ` (+${orderItems.length - 1})`
+        : (firstItem.item_name || ''),
+      listing_type: orderItems.length > 1
+        ? orderItems.map(s => s.listing_type).filter((v, i, a) => a.indexOf(v) === i).join('/')
+        : (firstItem.listing_type || ''),
+      country: firstItem.country || '',
       gross_amount: gross,
       net_amount: net,
       fees,
