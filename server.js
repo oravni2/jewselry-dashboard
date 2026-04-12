@@ -595,7 +595,7 @@ app.post('/api/printify/create-product', async (req, res) => {
       return res.status(response.status).json({ error: errData.message || errData.errors || errText || 'Printify create failed' });
     }
     const data = await response.json();
-    res.json(data);
+    res.json({ ...data, editor_url: `https://printify.com/app/store/${shopId}/products/${data.id}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
