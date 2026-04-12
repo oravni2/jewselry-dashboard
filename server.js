@@ -442,6 +442,9 @@ app.get('/api/payments/tax-report', async (req, res) => {
   res.json({
     podNet, physicalNet, israelNet,
     totalNet, totalGross, totalFees, totalVat,
+    podPct: totalNet > 0 ? podNet / totalNet : 0,
+    physicalPct: totalNet > 0 ? physicalNet / totalNet : 0,
+    israelPct: totalNet > 0 ? israelNet / totalNet : 0,
     currency: payments?.[0]?.currency || 'USD',
     detail,
   });

@@ -848,6 +848,8 @@ function formatNumber(n) {
 }
 
 // ---- Tax Report ----
+let taxPaymentData = null;
+
 async function loadTaxReport() {
   const month = document.getElementById('tax-month').value;
   if (!month) return;
@@ -855,6 +857,7 @@ async function loadTaxReport() {
   const data = await api(`/api/payments/tax-report?month=${month}`);
   if (data.error) return;
 
+  taxPaymentData = data;
   const currencySymbol = data.currency === 'ILS' ? '₪' : data.currency === 'USD' ? '$' : (data.currency || '$') + ' ';
   const fmt = (n) => currencySymbol + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -963,6 +966,7 @@ function updateTaxMarketingKPIs() {
   const plus = parseFloat(document.getElementById('tax-ex-etsy-plus')?.value) || 0;
   const netProfit = parseFloat(document.getElementById('tax-ex-net-profit')?.value) || 0;
   const totalMarketing = ads + offsite + plus;
+  const hasScreenshot = netProfit > 0;
 
   const el = document.getElementById('tax-marketing-total');
   if (el) el.textContent = sym + totalMarketing.toFixed(2);
@@ -972,6 +976,23 @@ function updateTaxMarketingKPIs() {
 
   const pKpi = document.getElementById('tax-report-profit');
   if (pKpi) pKpi.textContent = sym + (netProfit - totalMarketing).toFixed(2);
+
+  // Apply percentages from payments data to Activity Summary net_profit
+  if (hasScreenshot && taxPaymentData) {
+    const podFromActivity = taxPaymentData.podPct * netProfit;
+    const physFromActivity = taxPaymentData.physicalPct * netProfit;
+    const israelFromActivity = taxPaymentData.israelPct * netProfit;
+    const fmtSym = (n) => sym + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    document.getElementById('tax-pod-net').textContent = fmtSym(podFromActivity);
+    document.getElementById('tax-physical-net').textContent = fmtSym(physFromActivity);
+    document.getElementById('tax-israel-net').textContent = fmtSym(israelFromActivity);
+    document.getElementById('tax-total-net').textContent = fmtSym(netProfit);
+
+    document.getElementById('tax-pod-net').title = `${(taxPaymentData.podPct * 100).toFixed(1)}% מהנטו`;
+    document.getElementById('tax-physical-net').title = `${(taxPaymentData.physicalPct * 100).toFixed(1)}% מהנטו`;
+    document.getElementById('tax-israel-net').title = `${(taxPaymentData.israelPct * 100).toFixed(1)}% מהנטו`;
+  }
 }
 
 document.getElementById('tax-month').addEventListener('change', loadTaxReport);
