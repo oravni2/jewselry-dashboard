@@ -583,14 +583,16 @@ app.post('/api/printify/create-product', async (req, res) => {
         description,
         blueprint_id,
         print_provider_id,
-        variants,
+        variants: variants.map(v => ({ ...v, price: v.price || 2000 })),
         print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: [{ position: placeholderPosition, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] }] }]
       })
     });
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      console.error(`[Printify] Create failed (${response.status}):`, JSON.stringify(errData, null, 2));
-      return res.status(response.status).json({ error: errData.message || 'Printify create failed' });
+      const errText = await response.text().catch(() => '');
+      let errData = {};
+      try { errData = JSON.parse(errText); } catch (e) {}
+      console.error(`[Printify] Create failed (${response.status}):`, errText);
+      return res.status(response.status).json({ error: errData.message || errData.errors || errText || 'Printify create failed' });
     }
     const data = await response.json();
     res.json(data);
