@@ -1361,6 +1361,52 @@ textarea.listing-output-field {
 }
 
 /* ============================================
+   Tax Screenshot Extracted Data
+   ============================================ */
+#tax-screenshot-img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+.tax-extracted-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.tax-extracted-grid .form-group {
+  margin-bottom: 0;
+}
+
+.tax-extracted-grid input {
+  direction: ltr;
+  text-align: left;
+}
+
+.tax-marketing-summary {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--gold-50);
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius-sm);
+}
+
+.tax-marketing-summary h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--stone-700);
+  margin-bottom: 0.4rem;
+}
+
+.tax-marketing-row {
+  font-size: 0.88rem;
+  color: var(--stone-600);
+}
+
+/* ============================================
    Diamond Table
    ============================================ */
 .diamond-table-wrap {

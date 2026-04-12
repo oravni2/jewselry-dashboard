@@ -447,6 +447,38 @@ app.get('/api/payments/tax-report', async (req, res) => {
   });
 });
 
+// ---- TAX SCREENSHOT API ----
+
+app.post('/api/tax/analyze-screenshot', async (req, res) => {
+  const { image } = req.body;
+  if (!image) return res.status(400).json({ error: 'Image is required' });
+
+  try {
+    const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+    const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+          { type: 'text', text: 'Extract the following numbers from this Etsy Activity Summary screenshot.\nReturn ONLY valid JSON, no markdown, no explanation.\nFields: total_sales, refunds (positive number), fees (positive number), etsy_ads (positive number), offsite_ads (positive number), etsy_plus (positive number), net_profit.\nCurrency: detect from ₪ or $ symbols — return "ILS" or "USD".\nIf a field is not shown or is "--", return 0.' },
+        ]
+      }]
+    });
+
+    const responseText = message.content[0].text;
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Failed to parse AI response' });
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json(parsed);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- PRINTIFY API ----
 
 async function getPrintifyToken() {

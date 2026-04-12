@@ -865,6 +865,9 @@ async function loadTaxReport() {
   document.getElementById('tax-total-fees').textContent = fmt(data.totalFees);
   document.getElementById('tax-total-vat').textContent = fmt(data.totalVat);
 
+  // Update marketing & profit KPIs from extracted screenshot data
+  updateTaxMarketingKPIs();
+
   // Detail table
   const tbody = document.getElementById('tax-detail-body');
   if (!data.detail || data.detail.length === 0) {
@@ -885,6 +888,90 @@ async function loadTaxReport() {
       <td>${currencySymbol}${Number(r.vat_amount).toFixed(2)}</td>
     </tr>
   `).join('');
+}
+
+// Tax screenshot analysis
+let taxScreenshotBase64 = null;
+let taxExtractedCurrency = '$';
+
+const taxScreenDrop = document.getElementById('tax-screenshot-drop');
+const taxScreenInput = document.getElementById('tax-screenshot-input');
+
+taxScreenDrop.addEventListener('click', () => taxScreenInput.click());
+taxScreenDrop.addEventListener('dragover', (e) => { e.preventDefault(); taxScreenDrop.classList.add('dragover'); });
+taxScreenDrop.addEventListener('dragleave', () => taxScreenDrop.classList.remove('dragover'));
+taxScreenDrop.addEventListener('drop', (e) => {
+  e.preventDefault(); taxScreenDrop.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleTaxScreenshot(file);
+});
+taxScreenInput.addEventListener('change', (e) => { if (e.target.files[0]) handleTaxScreenshot(e.target.files[0]); });
+
+function handleTaxScreenshot(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    taxScreenshotBase64 = e.target.result;
+    document.getElementById('tax-screenshot-img').src = taxScreenshotBase64;
+    document.getElementById('tax-screenshot-preview').style.display = 'block';
+    document.getElementById('tax-screenshot-placeholder').style.display = 'none';
+    document.getElementById('btn-analyze-screenshot').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('btn-analyze-screenshot').addEventListener('click', async () => {
+  if (!taxScreenshotBase64) return;
+  const btn = document.getElementById('btn-analyze-screenshot');
+  const loading = document.getElementById('tax-screenshot-loading');
+  btn.disabled = true;
+  loading.style.display = 'flex';
+
+  try {
+    const result = await api('/api/tax/analyze-screenshot', {
+      method: 'POST',
+      body: { image: taxScreenshotBase64 },
+    });
+    if (result.error) { alert('שגיאה: ' + result.error); return; }
+
+    taxExtractedCurrency = result.currency === 'ILS' ? '₪' : '$';
+    document.getElementById('tax-ex-total-sales').value = result.total_sales || 0;
+    document.getElementById('tax-ex-refunds').value = result.refunds || 0;
+    document.getElementById('tax-ex-fees').value = result.fees || 0;
+    document.getElementById('tax-ex-etsy-ads').value = result.etsy_ads || 0;
+    document.getElementById('tax-ex-offsite-ads').value = result.offsite_ads || 0;
+    document.getElementById('tax-ex-etsy-plus').value = result.etsy_plus || 0;
+    document.getElementById('tax-ex-net-profit').value = result.net_profit || 0;
+    document.getElementById('tax-extracted-data').style.display = 'block';
+    updateTaxMarketingKPIs();
+  } catch (err) {
+    alert('שגיאה: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    loading.style.display = 'none';
+  }
+});
+
+// Recalculate on manual edits
+document.querySelectorAll('.tax-extracted-grid input').forEach(input => {
+  input.addEventListener('input', updateTaxMarketingKPIs);
+});
+
+function updateTaxMarketingKPIs() {
+  const sym = taxExtractedCurrency || '$';
+  const ads = parseFloat(document.getElementById('tax-ex-etsy-ads')?.value) || 0;
+  const offsite = parseFloat(document.getElementById('tax-ex-offsite-ads')?.value) || 0;
+  const plus = parseFloat(document.getElementById('tax-ex-etsy-plus')?.value) || 0;
+  const netProfit = parseFloat(document.getElementById('tax-ex-net-profit')?.value) || 0;
+  const totalMarketing = ads + offsite + plus;
+
+  const el = document.getElementById('tax-marketing-total');
+  if (el) el.textContent = sym + totalMarketing.toFixed(2);
+
+  const mKpi = document.getElementById('tax-marketing-kpi');
+  if (mKpi) mKpi.textContent = sym + totalMarketing.toFixed(2);
+
+  const pKpi = document.getElementById('tax-report-profit');
+  if (pKpi) pKpi.textContent = sym + (netProfit - totalMarketing).toFixed(2);
 }
 
 document.getElementById('tax-month').addEventListener('change', loadTaxReport);

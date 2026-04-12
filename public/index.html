@@ -289,6 +289,46 @@
         </div>
       </div>
 
+      <!-- Activity Summary Screenshot -->
+      <div class="card sales-section" id="tax-screenshot-section">
+        <div class="card-header">
+          <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+          <h2>העלאת Activity Summary מאטסי</h2>
+        </div>
+        <div class="listing-image-drop" id="tax-screenshot-drop">
+          <input type="file" id="tax-screenshot-input" accept="image/*" class="file-input-hidden">
+          <div id="tax-screenshot-preview" style="display:none;">
+            <img id="tax-screenshot-img" alt="">
+          </div>
+          <div id="tax-screenshot-placeholder">
+            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+            <span class="file-drop-text">לחץ או גרור צילום מסך לכאן</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-analyze-screenshot" style="margin-top:1rem;" disabled>
+          נתח צילום מסך
+        </button>
+        <div id="tax-screenshot-loading" class="loading" style="display:none;"><span class="spinner"></span>מנתח...</div>
+        <!-- Extracted Data (editable) -->
+        <div id="tax-extracted-data" style="display:none;">
+          <div class="tax-extracted-grid">
+            <div class="form-group"><label>Total Sales</label><input type="number" step="0.01" id="tax-ex-total-sales"></div>
+            <div class="form-group"><label>Refunds</label><input type="number" step="0.01" id="tax-ex-refunds"></div>
+            <div class="form-group"><label>Fees</label><input type="number" step="0.01" id="tax-ex-fees"></div>
+            <div class="form-group"><label>Etsy Ads</label><input type="number" step="0.01" id="tax-ex-etsy-ads"></div>
+            <div class="form-group"><label>Offsite Ads</label><input type="number" step="0.01" id="tax-ex-offsite-ads"></div>
+            <div class="form-group"><label>Etsy Plus</label><input type="number" step="0.01" id="tax-ex-etsy-plus"></div>
+            <div class="form-group"><label>Net Profit</label><input type="number" step="0.01" id="tax-ex-net-profit"></div>
+          </div>
+          <div class="tax-marketing-summary">
+            <h4>הוצאות פרסום מוכרות</h4>
+            <div class="tax-marketing-row">
+              Etsy Ads + Offsite Ads + Etsy Plus = <strong id="tax-marketing-total">$0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Tax KPI Cards -->
       <div class="kpi-grid kpi-grid-6" id="tax-kpis">
         <div class="kpi-card">
@@ -314,6 +354,14 @@
         <div class="kpi-card">
           <div class="kpi-label">מע"מ</div>
           <div class="kpi-value" id="tax-total-vat">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">הוצאות פרסום</div>
+          <div class="kpi-value" id="tax-marketing-kpi">$0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">רווח לדיווח</div>
+          <div class="kpi-value" id="tax-report-profit">$0</div>
         </div>
       </div>
 
