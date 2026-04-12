@@ -65,10 +65,10 @@ function renderTasks(tasks) {
       <div class="task-card ${isDone ? 'done' : ''}" data-id="${task.id}">
         <button class="task-check" onclick="toggleTask('${task.id}', '${task.status}')" title="${isDone ? 'סמן כפתוח' : 'סמן כהושלם'}"></button>
         ${catDot}
-        <div class="task-body">
+        <div class="task-body" style="cursor:pointer;" onclick="openTaskDetail('${task.id}')"
           <div class="task-title">${escapeHtml(task.title)}</div>
           <div class="task-meta">
-            ${task.description ? `<span>${escapeHtml(task.description)}</span>` : ''}
+            ${task.description ? `<span>${escapeHtml(task.description.length > 60 ? task.description.slice(0, 60) + '...' : task.description)}</span>` : ''}
             ${dueDateStr ? `<span>${dueDateStr}</span>` : ''}
           </div>
         </div>
@@ -86,6 +86,52 @@ async function toggleTask(id, currentStatus) {
   });
   loadTasks();
 }
+
+// Task detail modal
+let currentTaskDetail = null;
+
+window.openTaskDetail = async function(id) {
+  const tasks = await api('/api/tasks?');
+  const task = (Array.isArray(tasks) ? tasks : []).find(t => t.id === id);
+  if (!task) return;
+  currentTaskDetail = task;
+
+  document.getElementById('task-detail-title').textContent = task.title;
+  document.getElementById('task-detail-desc').textContent = task.description || 'אין תיאור';
+  document.getElementById('task-detail-notes').value = '';
+  document.getElementById('task-detail-modal').style.display = 'flex';
+
+  // Update done button text based on status
+  document.getElementById('btn-task-done').textContent = task.status === 'open' ? 'סמן כבוצע' : 'סמן כפתוח';
+};
+
+document.getElementById('btn-close-task-detail').addEventListener('click', () => {
+  document.getElementById('task-detail-modal').style.display = 'none';
+});
+
+document.getElementById('task-detail-modal').querySelector('.modal-backdrop').addEventListener('click', () => {
+  document.getElementById('task-detail-modal').style.display = 'none';
+});
+
+document.getElementById('btn-save-task-notes').addEventListener('click', async () => {
+  if (!currentTaskDetail) return;
+  const notes = document.getElementById('task-detail-notes').value.trim();
+  if (!notes) return;
+  const now = new Date().toLocaleDateString('he-IL');
+  const updated = (currentTaskDetail.description || '') + '\n\n[' + now + '] ' + notes;
+  await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { description: updated } });
+  document.getElementById('task-detail-desc').textContent = updated;
+  document.getElementById('task-detail-notes').value = '';
+  currentTaskDetail.description = updated;
+});
+
+document.getElementById('btn-task-done').addEventListener('click', async () => {
+  if (!currentTaskDetail) return;
+  const newStatus = currentTaskDetail.status === 'open' ? 'done' : 'open';
+  await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { status: newStatus } });
+  document.getElementById('task-detail-modal').style.display = 'none';
+  loadTasks();
+});
 
 // Filter change listeners
 document.getElementById('show-all-tasks').addEventListener('change', loadTasks);
