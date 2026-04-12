@@ -214,13 +214,17 @@ document.getElementById('btn-generate-reply').addEventListener('click', async ()
     // Split response into Hebrew summary and English reply
     const stripMd = (s) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
     const summaryMatch = text.match(/סיכום:?\s*([\s\S]*?)(?=Reply:|$)/i);
-    const replyMatch = text.match(/Reply:?\s*([\s\S]*)/i);
+    const replyMatch = text.match(/Reply:?\s*([\s\S]*?)(?=תרגום לעברית:|$)/i);
+    const translationMatch = text.match(/תרגום לעברית:?\s*([\s\S]*)/i);
 
     document.getElementById('cs-summary').textContent = summaryMatch
       ? stripMd(summaryMatch[1].trim())
       : stripMd(text);
     document.getElementById('cs-reply').textContent = replyMatch
       ? stripMd(replyMatch[1].trim())
+      : '';
+    document.getElementById('cs-translation').textContent = translationMatch
+      ? stripMd(translationMatch[1].trim())
       : '';
 
     outputDiv.style.display = 'flex';
@@ -236,6 +240,15 @@ document.getElementById('btn-copy-reply').addEventListener('click', () => {
   const replyText = document.getElementById('cs-reply').textContent;
   navigator.clipboard.writeText(replyText).then(() => {
     const btn = document.getElementById('btn-copy-reply');
+    btn.textContent = 'הועתק!';
+    setTimeout(() => { btn.textContent = 'העתק'; }, 1500);
+  });
+});
+
+document.getElementById('btn-copy-translation').addEventListener('click', () => {
+  const text = document.getElementById('cs-translation').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy-translation');
     btn.textContent = 'הועתק!';
     setTimeout(() => { btn.textContent = 'העתק'; }, 1500);
   });

@@ -179,7 +179,7 @@ app.post('/api/cs/generate', async (req, res) => {
   if (david_notes) {
     userContent += `\n\nNotes from David (in Hebrew):\n${david_notes}`;
   }
-  userContent += '\n\nPlease respond with:\n1. First, a Hebrew summary of the customer\'s message (labeled "סיכום:")\n2. Then, a professional English reply to the customer (labeled "Reply:")';
+  userContent += '\n\nPlease respond with:\n1. First, a Hebrew summary of the customer\'s message (labeled "סיכום:")\n2. Then, a professional English reply to the customer (labeled "Reply:")\n3. Then, a Hebrew translation of the English reply (labeled "תרגום לעברית:")';
 
   try {
     const message = await anthropic.messages.create({
