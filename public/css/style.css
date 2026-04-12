@@ -1594,6 +1594,13 @@ textarea.listing-output-field {
   font-weight: 600;
 }
 
+.pod-result-tags {
+  font-size: 0.75rem;
+  color: var(--stone-500);
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
+
 .pod-result-link:hover {
   color: var(--gold-700);
   text-decoration: underline;

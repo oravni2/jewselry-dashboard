@@ -1382,7 +1382,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
 
   const title = document.getElementById('pod-title').value.trim();
   const description = document.getElementById('pod-description').value.trim();
-  if (!title) return alert('יש להזין כותרת');
+  const generateContent = !title; // auto-generate if no title provided
 
   const btn = document.getElementById('btn-create-pod');
   const loadingDiv = document.getElementById('pod-loading');
@@ -1421,19 +1421,27 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
       const createRes = await api('/api/printify/create-product', {
         method: 'POST',
         body: {
-          title,
-          description,
+          title: title || product.title,
+          description: description || '',
           blueprint_id: product.blueprint_id,
           print_provider_id: product.provider_id,
           variants,
           image_id: imageId,
+          generate_content: generateContent,
+          image_base64: generateContent ? podImageBase64 : undefined,
         },
       });
 
       if (createRes.error) {
         results.push({ title: product.title, error: createRes.error });
       } else {
-        results.push({ title: product.title, id: createRes.id, success: true });
+        results.push({
+          title: createRes.generated_title || product.title,
+          id: createRes.id,
+          success: true,
+          editor_url: createRes.editor_url,
+          generated_tags: createRes.generated_tags,
+        });
       }
     }
 
@@ -1441,9 +1449,13 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
     const resultsList = document.getElementById('pod-results-list');
     resultsList.innerHTML = results.map(r => {
       if (r.success) {
+        const tagsLine = r.generated_tags ? `<div class="pod-result-tags">טאגים: ${escapeHtml(r.generated_tags)}</div>` : '';
         return `<div class="pod-result-item">
-          <span class="pod-result-name">${escapeHtml(r.title)}</span>
-          <a class="pod-result-link" href="https://printify.com/app/editor/${r.id}" target="_blank">פתח בפרינטיפיי</a>
+          <div>
+            <span class="pod-result-name">${escapeHtml(r.title)}</span>
+            ${tagsLine}
+          </div>
+          <a class="pod-result-link" href="${r.editor_url || 'https://printify.com/app/editor/' + r.id}" target="_blank">פתח בפרינטיפיי</a>
         </div>`;
       } else {
         return `<div class="pod-result-item">

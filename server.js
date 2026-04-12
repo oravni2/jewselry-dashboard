@@ -554,13 +554,84 @@ app.post('/api/printify/upload-image', async (req, res) => {
 });
 
 app.post('/api/printify/create-product', async (req, res) => {
-  const { title, description, blueprint_id, print_provider_id, variants, image_id } = req.body;
+  const { title, description, blueprint_id, print_provider_id, variants, image_id, generate_content, image_base64 } = req.body;
   const token = await getPrintifyToken();
   const shopId = process.env.PRINTIFY_SHOP_ID;
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
   if (!shopId) return res.status(400).json({ error: 'PRINTIFY_SHOP_ID not configured' });
   try {
-    console.log(`[Printify] Creating product in shop ${shopId}: "${title}" (blueprint: ${blueprint_id}, provider: ${print_provider_id})`);
+    let finalTitle = title;
+    let finalDescription = description;
+    let generatedTags = null;
+    let generatedWarning = null;
+
+    // Auto-generate title/description if requested
+    if (generate_content && image_base64) {
+      try {
+        // Fetch blueprint details
+        const bpRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}.json`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const bpData = bpRes.ok ? await bpRes.json() : {};
+
+        // Fetch keyword bank (top 100 by volume)
+        const { data: kwData } = await supabase.from('settings').select('value').eq('key', 'keyword_bank').single();
+        let keywordList = '';
+        if (kwData?.value) {
+          const allKw = JSON.parse(kwData.value);
+          keywordList = allKw.sort((a, b) => b.volume - a.volume).slice(0, 100).map(k => k.keyword).join(', ');
+        }
+
+        const base64Data = image_base64.replace(/^data:image\/[a-z]+;base64,/, '');
+        const mediaType = image_base64.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+
+        const systemPrompt = `You are an expert Etsy SEO specialist for Jewish and Israeli art and Judaica products.
+You are creating a listing for a print-on-demand product.
+
+PRODUCT TYPE: ${bpData.title || 'Unknown'}
+PRODUCT TECHNICAL DETAILS: ${bpData.description || 'N/A'}
+
+Analyze the design image and create an optimized Etsy listing.
+
+TITLE: keyword chaining, 110-140 chars, no punctuation, first words = product noun, include gift terms.
+DESCRIPTION: SEO layer → Key Features (✦ bullets, include product technical specs) → Processing 3-10 days → Care Instructions → "Discover more at https://jewselry.etsy.com. Follow @jewselry_world"
+TAGS: exactly 13, max 20 chars, from title keywords, prefer high-volume from keyword bank.
+
+KEYWORD BANK (top keywords by volume):
+${keywordList}
+
+OUTPUT JSON ONLY — no markdown:
+{"title":"...","description":"...","tags":"...","warning":null}`;
+
+        const aiMsg = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 2048,
+          system: systemPrompt,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+              { type: 'text', text: 'Create an optimized Etsy listing for this product design. Return JSON only.' },
+            ]
+          }]
+        });
+
+        const aiText = aiMsg.content[0].text;
+        const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          finalTitle = parsed.title || finalTitle;
+          finalDescription = parsed.description || finalDescription;
+          generatedTags = parsed.tags || null;
+          generatedWarning = parsed.warning || null;
+        }
+        console.log(`[Printify] AI generated title: "${finalTitle}"`);
+      } catch (aiErr) {
+        console.error('[Printify] AI generation failed, using fallback:', aiErr.message);
+      }
+    }
+
+    console.log(`[Printify] Creating product in shop ${shopId}: "${finalTitle}" (blueprint: ${blueprint_id}, provider: ${print_provider_id})`);
 
     // Fetch available print areas to get correct placeholder position
     const variantsRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}/print_providers/${print_provider_id}/variants.json`, {
@@ -579,8 +650,8 @@ app.post('/api/printify/create-product', async (req, res) => {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title,
-        description,
+        title: finalTitle,
+        description: finalDescription,
         blueprint_id,
         print_provider_id,
         variants: variants.map(v => ({ ...v, price: v.price || 2000 })),
@@ -595,7 +666,14 @@ app.post('/api/printify/create-product', async (req, res) => {
       return res.status(response.status).json({ error: errData.message || errData.errors || errText || 'Printify create failed' });
     }
     const data = await response.json();
-    res.json({ ...data, editor_url: `https://printify.com/app/store/${shopId}/products/${data.id}` });
+    res.json({
+      ...data,
+      editor_url: `https://printify.com/app/store/${shopId}/products/${data.id}`,
+      generated_title: generate_content ? finalTitle : undefined,
+      generated_description: generate_content ? finalDescription : undefined,
+      generated_tags: generatedTags,
+      generated_warning: generatedWarning,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
