@@ -166,14 +166,15 @@ document.getElementById('btn-generate-reply').addEventListener('click', async ()
 
     const text = result.response;
     // Split response into Hebrew summary and English reply
+    const stripMd = (s) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
     const summaryMatch = text.match(/סיכום:?\s*([\s\S]*?)(?=Reply:|$)/i);
     const replyMatch = text.match(/Reply:?\s*([\s\S]*)/i);
 
     document.getElementById('cs-summary').textContent = summaryMatch
-      ? summaryMatch[1].trim()
-      : text;
+      ? stripMd(summaryMatch[1].trim())
+      : stripMd(text);
     document.getElementById('cs-reply').textContent = replyMatch
-      ? replyMatch[1].trim()
+      ? stripMd(replyMatch[1].trim())
       : '';
 
     outputDiv.style.display = 'flex';
