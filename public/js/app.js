@@ -866,7 +866,6 @@ async function loadTaxReport() {
   document.getElementById('tax-israel-net').textContent = fmt(data.israelNet);
   document.getElementById('tax-total-net').textContent = fmt(data.totalNet);
   document.getElementById('tax-total-fees').textContent = fmt(data.totalFees);
-  document.getElementById('tax-total-vat').textContent = fmt(data.totalVat);
 
   // Update marketing & profit KPIs from extracted screenshot data
   updateTaxMarketingKPIs();
