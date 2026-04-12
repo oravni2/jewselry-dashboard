@@ -945,12 +945,28 @@ document.getElementById('btn-analyze-screenshot').addEventListener('click', asyn
     document.getElementById('tax-ex-net-profit').value = result.net_profit || 0;
     document.getElementById('tax-extracted-data').style.display = 'block';
     updateTaxMarketingKPIs();
+    // Hide upload UI, show success message
+    document.getElementById('tax-screenshot-drop').style.display = 'none';
+    document.getElementById('btn-analyze-screenshot').style.display = 'none';
+    document.getElementById('tax-screenshot-success').style.display = 'flex';
   } catch (err) {
     alert('שגיאה: ' + err.message);
   } finally {
     btn.disabled = false;
     loading.style.display = 'none';
   }
+});
+
+// Replace screenshot button
+document.getElementById('btn-replace-screenshot').addEventListener('click', () => {
+  taxScreenshotBase64 = null;
+  document.getElementById('tax-screenshot-drop').style.display = 'flex';
+  document.getElementById('tax-screenshot-preview').style.display = 'none';
+  document.getElementById('tax-screenshot-placeholder').style.display = 'flex';
+  document.getElementById('btn-analyze-screenshot').style.display = '';
+  document.getElementById('btn-analyze-screenshot').disabled = true;
+  document.getElementById('tax-screenshot-success').style.display = 'none';
+  document.getElementById('tax-screenshot-input').value = '';
 });
 
 // Recalculate on manual edits
