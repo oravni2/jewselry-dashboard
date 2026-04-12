@@ -558,6 +558,20 @@ app.post('/api/printify/create-product', async (req, res) => {
   if (!shopId) return res.status(400).json({ error: 'PRINTIFY_SHOP_ID not configured' });
   try {
     console.log(`[Printify] Creating product in shop ${shopId}: "${title}" (blueprint: ${blueprint_id}, provider: ${print_provider_id})`);
+
+    // Fetch available print areas to get correct placeholder position
+    const variantsRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}/print_providers/${print_provider_id}/variants.json`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    let placeholderPosition = 'front';
+    if (variantsRes.ok) {
+      const variantsData = await variantsRes.json();
+      if (variantsData.placeholders && variantsData.placeholders.length > 0) {
+        placeholderPosition = variantsData.placeholders[0].position;
+      }
+    }
+    console.log(`[Printify] Using placeholder position: ${placeholderPosition}`);
+
     const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -567,7 +581,7 @@ app.post('/api/printify/create-product', async (req, res) => {
         blueprint_id,
         print_provider_id,
         variants,
-        print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: [{ position: 'front', images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] }] }]
+        print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: [{ position: placeholderPosition, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] }] }]
       })
     });
     if (!response.ok) {
