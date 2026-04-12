@@ -171,7 +171,8 @@ app.post('/api/cs/generate', async (req, res) => {
     .eq('key', 'cs_system_prompt')
     .single();
 
-  const systemPrompt = setting?.value || 'You are a customer service agent for a jewelry business.';
+  const systemPrompt = (setting?.value || 'You are a customer service agent for a jewelry business.')
+    + '\n\nFORMATTING RULES (always apply, never override):\n- No markdown formatting — no **, no *, no ## headings\n- Keep replies concise — 3-5 sentences for simple issues\n- Write naturally, as a real person — not AI-generated sounding\n- No bullet points unless listing multiple items';
 
   let userContent = `Customer message:\n${customer_message}`;
   if (david_notes) {
