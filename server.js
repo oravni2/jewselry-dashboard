@@ -179,7 +179,7 @@ app.post('/api/cs/generate', async (req, res) => {
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }]
@@ -458,7 +458,7 @@ app.post('/api/tax/analyze-screenshot', async (req, res) => {
     const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       messages: [{
         role: 'user',
@@ -636,7 +636,7 @@ app.post('/api/listing/generate', async (req, res) => {
     const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: systemPrompt,
       messages: [{
