@@ -557,6 +557,7 @@ app.post('/api/printify/create-product', async (req, res) => {
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
   if (!shopId) return res.status(400).json({ error: 'PRINTIFY_SHOP_ID not configured' });
   try {
+    console.log(`[Printify] Creating product in shop ${shopId}: "${title}" (blueprint: ${blueprint_id}, provider: ${print_provider_id})`);
     const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -571,6 +572,7 @@ app.post('/api/printify/create-product', async (req, res) => {
     });
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
+      console.error(`[Printify] Create failed (${response.status}):`, JSON.stringify(errData, null, 2));
       return res.status(response.status).json({ error: errData.message || 'Printify create failed' });
     }
     const data = await response.json();
