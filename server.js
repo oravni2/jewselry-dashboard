@@ -589,6 +589,7 @@ app.post('/api/printify/create-product', async (req, res) => {
 
     // Auto-generate title/description if requested
     if (generate_content && image_base64) {
+      console.log(`[Printify] AI generation requested. image_base64 length: ${image_base64.length} chars`);
       try {
         // Fetch blueprint details
         const bpRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}.json`, {
@@ -646,10 +647,13 @@ OUTPUT JSON ONLY — no markdown:
           finalDescription = parsed.description || finalDescription;
           generatedTags = parsed.tags || null;
           generatedWarning = parsed.warning || null;
+          if (!parsed.title) console.warn('[Printify] AI returned empty title. Raw response:', aiText.slice(0, 500));
+        } else {
+          console.error('[Printify] AI response had no JSON. Raw response:', aiText.slice(0, 500));
         }
         console.log(`[Printify] AI generated title: "${finalTitle}"`);
       } catch (aiErr) {
-        console.error('[Printify] AI generation failed, using fallback:', aiErr.message);
+        console.error('[Printify] AI generation failed, using fallback:', aiErr.message, aiErr.stack);
       }
     }
 
