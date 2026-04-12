@@ -208,6 +208,10 @@ async function loadSettings() {
   const printifyData = await api('/api/settings/printify_api_token');
   document.getElementById('settings-printify-token').value = printifyData.error ? '' : (printifyData.value || '');
 
+  // Load accountant email
+  const accountantData = await api('/api/settings/accountant_email');
+  document.getElementById('settings-accountant-email').value = accountantData.error ? '' : (accountantData.value || '');
+
   // Load categories
   await loadCategories();
 }
@@ -219,6 +223,14 @@ document.getElementById('btn-save-prompt').addEventListener('click', async () =>
     body: { value },
   });
   const msg = document.getElementById('prompt-saved-msg');
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 2000);
+});
+
+document.getElementById('btn-save-accountant-email').addEventListener('click', async () => {
+  const value = document.getElementById('settings-accountant-email').value;
+  await api('/api/settings/accountant_email', { method: 'PUT', body: { value } });
+  const msg = document.getElementById('accountant-email-saved-msg');
   msg.style.display = 'inline';
   setTimeout(() => { msg.style.display = 'none'; }, 2000);
 });
@@ -1011,6 +1023,45 @@ function updateTaxMarketingKPIs() {
 }
 
 document.getElementById('tax-month').addEventListener('change', loadTaxReport);
+
+// Send tax report to accountant
+document.getElementById('btn-send-accountant').addEventListener('click', async () => {
+  const month = document.getElementById('tax-month').value;
+  if (!month) return alert('יש לבחור חודש');
+
+  const btn = document.getElementById('btn-send-accountant');
+  const msg = document.getElementById('send-accountant-msg');
+  btn.disabled = true;
+
+  const sym = taxExtractedCurrency || '$';
+  const getVal = (id) => parseFloat(document.getElementById(id)?.textContent?.replace(/[^0-9.\-]/g, '')) || 0;
+
+  const result = await api('/api/tax/send-email', {
+    method: 'POST',
+    body: {
+      month,
+      podNet: getVal('tax-pod-net'),
+      physicalNet: getVal('tax-physical-net'),
+      israelNet: getVal('tax-israel-net'),
+      totalNet: getVal('tax-total-net'),
+      marketingTotal: getVal('tax-marketing-kpi'),
+      reportProfit: getVal('tax-report-profit'),
+      currency: sym,
+    },
+  });
+
+  if (result.error) {
+    msg.style.display = 'inline';
+    msg.style.color = 'var(--red-600)';
+    msg.textContent = result.error;
+  } else {
+    msg.style.display = 'inline';
+    msg.style.color = 'var(--green-600)';
+    msg.textContent = 'אימייל נשלח בהצלחה';
+  }
+  setTimeout(() => { msg.style.display = 'none'; }, 4000);
+  btn.disabled = false;
+});
 
 // Export tax table to Excel
 document.getElementById('btn-export-tax').addEventListener('click', () => {

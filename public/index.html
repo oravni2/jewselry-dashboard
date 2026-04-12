@@ -365,6 +365,15 @@
         </div>
       </div>
 
+      <!-- Send to Accountant -->
+      <div class="tab-header" style="justify-content:flex-start; margin-bottom:1rem;">
+        <button class="btn btn-primary" id="btn-send-accountant">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+          שלח לרואה חשבון
+        </button>
+        <span id="send-accountant-msg" class="saved-msg" style="display:none; margin-right:0.5rem;"></span>
+      </div>
+
       <!-- Tax Detail Table -->
       <div class="card sales-section">
         <div class="card-header">
@@ -670,6 +679,23 @@
       <div class="card-footer">
         <button class="btn btn-primary" id="btn-save-printify-token">שמור</button>
         <span id="printify-token-saved-msg" class="saved-msg" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          נשמר!
+        </span>
+      </div>
+    </section>
+
+    <section class="settings-section card">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+        <h2>אימייל רואה חשבון</h2>
+      </div>
+      <div class="form-group">
+        <input type="email" id="settings-accountant-email" placeholder="accountant@example.com" style="direction:ltr; text-align:left;">
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-primary" id="btn-save-accountant-email">שמור</button>
+        <span id="accountant-email-saved-msg" class="saved-msg" style="display:none;">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
           נשמר!
         </span>

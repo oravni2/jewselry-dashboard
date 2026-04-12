@@ -33,6 +33,12 @@ const supabase = createClient(
 // Anthropic client
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Postmark client
+const postmark = require('postmark');
+const postmarkClient = process.env.POSTMARK_API_TOKEN
+  ? new postmark.ServerClient(process.env.POSTMARK_API_TOKEN)
+  : null;
+
 // ---- TASKS API ----
 
 app.get('/api/tasks', async (req, res) => {
@@ -478,6 +484,48 @@ app.post('/api/tax/analyze-screenshot', async (req, res) => {
     const parsed = JSON.parse(jsonMatch[0]);
     res.json(parsed);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- TAX EMAIL API ----
+
+app.post('/api/tax/send-email', async (req, res) => {
+  const { month, podNet, physicalNet, israelNet, totalNet, marketingTotal, reportProfit, currency } = req.body;
+
+  // Fetch accountant email
+  const { data: emailSetting } = await supabase.from('settings').select('value').eq('key', 'accountant_email').single();
+  const accountantEmail = emailSetting?.value;
+  if (!accountantEmail) return res.status(400).json({ error: 'אימייל רואה חשבון לא מוגדר בהגדרות' });
+  if (!postmarkClient) return res.status(400).json({ error: 'POSTMARK_API_TOKEN not configured' });
+  if (!process.env.POSTMARK_FROM_EMAIL) return res.status(400).json({ error: 'POSTMARK_FROM_EMAIL not configured' });
+
+  const sym = currency || '$';
+  const fmt = (n) => sym + Number(n).toFixed(2);
+
+  const htmlBody = `<div dir="rtl" style="font-family: Arial; font-size: 14px;">
+<h2>סיכום הכנסות Etsy — ${month}</h2>
+<table style="border-collapse:collapse; width:100%; max-width:400px;">
+  <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">סה"כ הכנסות נטו</td><td style="padding:8px; font-weight:600;">${fmt(totalNet)}</td></tr>
+  <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">מוצרי POD</td><td style="padding:8px;">${fmt(podNet)}</td></tr>
+  <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">מוצרים פיזיים לחו"ל</td><td style="padding:8px;">${fmt(physicalNet)}</td></tr>
+  <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">הזמנות ישראל</td><td style="padding:8px;">${fmt(israelNet)}</td></tr>
+  <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">הוצאות פרסום מוכרות</td><td style="padding:8px;">${fmt(marketingTotal)}</td></tr>
+  <tr><td style="padding:8px;"><strong>רווח לדיווח</strong></td><td style="padding:8px;"><strong>${fmt(reportProfit)}</strong></td></tr>
+</table>
+<p style="color:#888; font-size:12px; margin-top:20px;">נשלח אוטומטית מדשבורד Jewselry</p>
+</div>`;
+
+  try {
+    await postmarkClient.sendEmail({
+      From: process.env.POSTMARK_FROM_EMAIL,
+      To: accountantEmail,
+      Subject: `סיכום הכנסות Etsy לחודש ${month}`,
+      HtmlBody: htmlBody,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Postmark] Send failed:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
