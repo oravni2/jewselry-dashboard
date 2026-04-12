@@ -1181,10 +1181,8 @@ document.querySelectorAll('.listing-copy-btn').forEach(btn => {
 
 // ---- POD (Print on Demand) ----
 let podImageBase64 = null;
-let podBlueprints = [];
+let podProducts = [];
 let podSelectedBlueprints = new Set();
-
-const POD_FILTER_KEYWORDS = ['t-shirt', 'tee', 'unisex', 'hoodie', 'sweatshirt', 'mug', 'tote', 'poster', 'canvas', 'bag', 'tank top'];
 
 async function loadPodPage() {
   podSelectedBlueprints.clear();
@@ -1194,32 +1192,24 @@ async function loadPodPage() {
   const grid = document.getElementById('pod-blueprints-grid');
   grid.innerHTML = '<div class="loading"><span class="spinner"></span>טוען מוצרים...</div>';
 
-  const data = await api('/api/printify/blueprints');
+  const data = await api('/api/printify/products');
   if (data.error) {
     grid.innerHTML = `<div class="empty-state">${escapeHtml(data.error)}</div>`;
     return;
   }
 
-  // Filter to common product types
-  podBlueprints = (Array.isArray(data) ? data : []).filter(bp => {
-    const title = (bp.title || '').toLowerCase();
-    return POD_FILTER_KEYWORDS.some(kw => title.includes(kw));
-  }).slice(0, 30);
+  podProducts = Array.isArray(data) ? data : [];
 
-  if (!podBlueprints.length) {
-    grid.innerHTML = '<div class="empty-state">לא נמצאו מוצרים. וודא שה-API Token מוגדר בהגדרות.</div>';
+  if (!podProducts.length) {
+    grid.innerHTML = '<div class="empty-state">לא הוגדרו מוצרים. הוסף pod_products בהגדרות.</div>';
     return;
   }
 
-  grid.innerHTML = podBlueprints.map(bp => {
-    const img = bp.images && bp.images.length > 0 ? bp.images[0] : '';
-    return `
-      <div class="pod-blueprint-card" data-bp-id="${bp.id}" onclick="togglePodBlueprint(${bp.id})">
-        ${img ? `<img class="pod-blueprint-img" src="${img}" alt="${escapeHtml(bp.title)}">` : '<div class="pod-blueprint-img"></div>'}
-        <div class="pod-blueprint-name" title="${escapeHtml(bp.title)}">${escapeHtml(bp.title)}</div>
-      </div>
-    `;
-  }).join('');
+  grid.innerHTML = podProducts.map(p => `
+    <div class="pod-blueprint-card" data-bp-id="${p.blueprint_id}" onclick="togglePodBlueprint(${p.blueprint_id})">
+      <div class="pod-blueprint-name" title="${escapeHtml(p.title)}">${escapeHtml(p.title)}</div>
+    </div>
+  `).join('');
 }
 
 window.togglePodBlueprint = function(id) {
@@ -1228,7 +1218,6 @@ window.togglePodBlueprint = function(id) {
   } else {
     podSelectedBlueprints.add(id);
   }
-  // Update UI
   document.querySelectorAll('.pod-blueprint-card').forEach(card => {
     const bpId = parseInt(card.dataset.bpId, 10);
     card.classList.toggle('selected', podSelectedBlueprints.has(bpId));
@@ -1286,46 +1275,42 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
       method: 'POST',
       body: { image: podImageBase64, filename: 'design.png' },
     });
-
     if (uploadRes.error) { alert('שגיאה בהעלאת תמונה: ' + uploadRes.error); return; }
     const imageId = uploadRes.id;
 
-    // Step 2: Create products for each selected blueprint
+    // Step 2: Create products for each selected product
     const results = [];
     for (const bpId of podSelectedBlueprints) {
-      const bp = podBlueprints.find(b => b.id === bpId);
-      if (!bp) continue;
+      const product = podProducts.find(p => p.blueprint_id === bpId);
+      if (!product) continue;
 
-      // Get print providers for this blueprint
-      const providers = await api(`/api/printify/blueprints/${bpId}/variants`);
-      if (providers.error || !Array.isArray(providers) || providers.length === 0) {
-        results.push({ title: bp.title, error: 'No print providers available' });
+      // Fetch variants for this blueprint + provider combo
+      const variantsData = await api(`/api/printify/blueprints/${product.blueprint_id}/providers/${product.provider_id}/variants`);
+      if (variantsData.error || !variantsData.variants) {
+        results.push({ title: product.title, error: variantsData.error || 'No variants found' });
         continue;
       }
 
-      // Use first provider
-      const provider = providers[0];
-
-      // Get variants for this provider
-      const variantsRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${bpId}/print_providers/${provider.id}/variants.json`);
+      // Use ALL enabled variants
+      const variants = variantsData.variants.map(v => ({ id: v.id, price: 0, is_enabled: true }));
 
       // Create product
       const createRes = await api('/api/printify/create-product', {
         method: 'POST',
         body: {
-          title: title,
-          description: description,
-          blueprint_id: bpId,
-          print_provider_id: provider.id,
-          variants: (provider.variants || []).slice(0, 20).map(v => ({ id: v.id, price: 0, is_enabled: true })),
+          title,
+          description,
+          blueprint_id: product.blueprint_id,
+          print_provider_id: product.provider_id,
+          variants,
           image_id: imageId,
         },
       });
 
       if (createRes.error) {
-        results.push({ title: bp.title, error: createRes.error });
+        results.push({ title: product.title, error: createRes.error });
       } else {
-        results.push({ title: bp.title, id: createRes.id, success: true });
+        results.push({ title: product.title, id: createRes.id, success: true });
       }
     }
 

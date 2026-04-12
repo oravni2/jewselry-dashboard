@@ -433,11 +433,6 @@ app.get('/api/payments/tax-report', async (req, res) => {
 
 // ---- PRINTIFY API ----
 
-// In-memory cache for blueprints
-let blueprintsCache = null;
-let blueprintsCacheTime = 0;
-const BLUEPRINTS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
-
 async function getPrintifyToken() {
   // Try env first, then DB setting
   if (process.env.PRINTIFY_API_TOKEN) return process.env.PRINTIFY_API_TOKEN;
@@ -445,32 +440,39 @@ async function getPrintifyToken() {
   return data?.value || null;
 }
 
-app.get('/api/printify/blueprints', async (req, res) => {
-  // Check cache
-  if (blueprintsCache && (Date.now() - blueprintsCacheTime < BLUEPRINTS_CACHE_TTL)) {
-    return res.json(blueprintsCache);
+// Get configured POD products from settings
+app.get('/api/printify/products', async (req, res) => {
+  const { data, error } = await supabase.from('settings').select('value').eq('key', 'pod_products').single();
+  if (error || !data) return res.status(500).json({ error: 'pod_products not configured' });
+  try {
+    res.json(JSON.parse(data.value));
+  } catch (e) {
+    res.status(500).json({ error: 'Invalid pod_products JSON' });
   }
+});
+
+// Get print providers for a blueprint
+app.get('/api/printify/blueprints/:blueprintId/variants', async (req, res) => {
   const token = await getPrintifyToken();
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
   try {
-    const response = await fetch('https://api.printify.com/v1/catalog/blueprints.json', {
+    const response = await fetch(`https://api.printify.com/v1/catalog/blueprints/${req.params.blueprintId}/print_providers.json`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!response.ok) return res.status(response.status).json({ error: 'Printify API error: ' + response.statusText });
+    if (!response.ok) return res.status(response.status).json({ error: 'Printify API error' });
     const data = await response.json();
-    blueprintsCache = data;
-    blueprintsCacheTime = Date.now();
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/printify/blueprints/:blueprintId/variants', async (req, res) => {
+// Get variants for a specific blueprint + provider combo
+app.get('/api/printify/blueprints/:blueprintId/providers/:providerId/variants', async (req, res) => {
   const token = await getPrintifyToken();
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
   try {
-    const response = await fetch(`https://api.printify.com/v1/catalog/blueprints/${req.params.blueprintId}/print_providers.json`, {
+    const response = await fetch(`https://api.printify.com/v1/catalog/blueprints/${req.params.blueprintId}/print_providers/${req.params.providerId}/variants.json`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     if (!response.ok) return res.status(response.status).json({ error: 'Printify API error' });

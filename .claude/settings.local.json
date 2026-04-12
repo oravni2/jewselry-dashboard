@@ -24,7 +24,12 @@
       "Bash(python3 -c ':*)",
       "Bash(python -c \"print\\('python works'\\)\")",
       "Bash(node scripts/append-data.js)",
-      "Bash(node scripts/insert-all-keywords.js)"
+      "Bash(node scripts/insert-all-keywords.js)",
+      "Bash(node scripts/fetch-blueprints.js)",
+      "Bash(node scripts/save-blueprints.js)",
+      "Bash(node scripts/fetch-providers.js)",
+      "Bash(node scripts/check-provider99.js)",
+      "Bash(node scripts/insert-pod-config.js)"
     ]
   }
 }

@@ -1,0 +1,127 @@
+Blueprint ID | Blueprint Name | Provider ID | Provider Name | Location
+6 | Unisex Heavy Cotton Tee | 34 | The Print Bar | -
+6 | Unisex Heavy Cotton Tee | 402 | Atelier Katanga | -
+6 | Unisex Heavy Cotton Tee | 66 | Prima Printing | -
+6 | Unisex Heavy Cotton Tee | 61 | Dimona Tee | -
+6 | Unisex Heavy Cotton Tee | 27 | Print Geek | -
+6 | Unisex Heavy Cotton Tee | 30 | OPT OnDemand | -
+6 | Unisex Heavy Cotton Tee | 72 | Print Clever | -
+6 | Unisex Heavy Cotton Tee | 26 | Textildruck Europa | -
+6 | Unisex Heavy Cotton Tee | 3 | Marco Fine Arts | -
+6 | Unisex Heavy Cotton Tee | 54 | JAMS Designs | -
+6 | Unisex Heavy Cotton Tee | 217 | Fulfill Engine | -
+6 | Unisex Heavy Cotton Tee | 42 | Drive Fulfillment | -
+6 | Unisex Heavy Cotton Tee | 29 | Monster Digital | -
+6 | Unisex Heavy Cotton Tee | 410 | Printful | -
+6 | Unisex Heavy Cotton Tee | 39 | SwiftPOD | -
+6 | Unisex Heavy Cotton Tee | 99 | Printify Choice | -
+6 | Unisex Heavy Cotton Tee | 41 | Duplium | -
+6 | Unisex Heavy Cotton Tee | 331 | Shirt Monkey | -
+6 | Unisex Heavy Cotton Tee | 103 | Stacked Commerce | -
+6 | Unisex Heavy Cotton Tee | 50 | Underground Threads | -
+6 | Unisex Heavy Cotton Tee | 51 | Stylus | -
+6 | Unisex Heavy Cotton Tee | 6 | T Shirt and Sons | -
+33 | Infant Fine Jersey Bodysuit | 61 | Dimona Tee | -
+33 | Infant Fine Jersey Bodysuit | 51 | Stylus | -
+33 | Infant Fine Jersey Bodysuit | 6 | T Shirt and Sons | -
+33 | Infant Fine Jersey Bodysuit | 41 | Duplium | -
+33 | Infant Fine Jersey Bodysuit | 27 | Print Geek | -
+33 | Infant Fine Jersey Bodysuit | 99 | Printify Choice | -
+33 | Infant Fine Jersey Bodysuit | 39 | SwiftPOD | -
+33 | Infant Fine Jersey Bodysuit | 29 | Monster Digital | -
+66 | Unisex Heavy Blend™ Full Zip Hooded Sweatshirt | 34 | The Print Bar | -
+66 | Unisex Heavy Blend™ Full Zip Hooded Sweatshirt | 217 | Fulfill Engine | -
+66 | Unisex Heavy Blend™ Full Zip Hooded Sweatshirt | 41 | Duplium | -
+66 | Unisex Heavy Blend™ Full Zip Hooded Sweatshirt | 29 | Monster Digital | -
+66 | Unisex Heavy Blend™ Full Zip Hooded Sweatshirt | 39 | SwiftPOD | -
+66 | Unisex Heavy Blend™ Full Zip Hooded Sweatshirt | 99 | Printify Choice | -
+74 | Spiral Notebook - Ruled Line | 1 | SPOKE Custom Products | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 217 | Fulfill Engine | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 34 | The Print Bar | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 402 | Atelier Katanga | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 29 | Monster Digital | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 72 | Print Clever | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 27 | Print Geek | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 410 | Printful | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 6 | T Shirt and Sons | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 222 | SinaLite | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 50 | Underground Threads | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 41 | Duplium | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 26 | Textildruck Europa | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 66 | Prima Printing | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 42 | Drive Fulfillment | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 61 | Dimona Tee | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 39 | SwiftPOD | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 99 | Printify Choice | -
+77 | Unisex Heavy Blend™ Hooded Sweatshirt | 3 | Marco Fine Arts | -
+81 | Kids Softstyle Tee | 26 | Textildruck Europa | -
+81 | Kids Softstyle Tee | 34 | The Print Bar | -
+81 | Kids Softstyle Tee | 402 | Atelier Katanga | -
+81 | Kids Softstyle Tee | 61 | Dimona Tee | -
+81 | Kids Softstyle Tee | 29 | Monster Digital | -
+81 | Kids Softstyle Tee | 72 | Print Clever | -
+81 | Kids Softstyle Tee | 6 | T Shirt and Sons | -
+81 | Kids Softstyle Tee | 99 | Printify Choice | -
+81 | Kids Softstyle Tee | 30 | OPT OnDemand | -
+81 | Kids Softstyle Tee | 39 | SwiftPOD | -
+81 | Kids Softstyle Tee | 41 | Duplium | -
+147 | Unisex Tri-Blend 3\4 Raglan Tee | 29 | Monster Digital | -
+147 | Unisex Tri-Blend 3\4 Raglan Tee | 99 | Printify Choice | -
+157 | Kids Heavy Cotton™ Tee | 34 | The Print Bar | -
+157 | Kids Heavy Cotton™ Tee | 61 | Dimona Tee | -
+157 | Kids Heavy Cotton™ Tee | 66 | Prima Printing | -
+157 | Kids Heavy Cotton™ Tee | 29 | Monster Digital | -
+157 | Kids Heavy Cotton™ Tee | 72 | Print Clever | -
+157 | Kids Heavy Cotton™ Tee | 39 | SwiftPOD | -
+157 | Kids Heavy Cotton™ Tee | 30 | OPT OnDemand | -
+157 | Kids Heavy Cotton™ Tee | 41 | Duplium | -
+157 | Kids Heavy Cotton™ Tee | 3 | Marco Fine Arts | -
+157 | Kids Heavy Cotton™ Tee | 27 | Print Geek | -
+157 | Kids Heavy Cotton™ Tee | 99 | Printify Choice | -
+157 | Kids Heavy Cotton™ Tee | 26 | Textildruck Europa | -
+157 | Kids Heavy Cotton™ Tee | 331 | Shirt Monkey | -
+229 | Spun Polyester Square Pillowcase | 10 | MWW On Demand | -
+400 | Kiss-Cut Stickers | 1 | SPOKE Custom Products | -
+400 | Kiss-Cut Stickers | 99 | Printify Choice | -
+421 | Tough Cases | 23 | WOYC | -
+459 | Placemat, 1pc | 10 | MWW On Demand | -
+478 | Ceramic Mug, (11oz, 15oz) | 28 | District Photo | -
+478 | Ceramic Mug, (11oz, 15oz) | 99 | Printify Choice | -
+478 | Ceramic Mug, (11oz, 15oz) | 39 | SwiftPOD | -
+478 | Ceramic Mug, (11oz, 15oz) | 29 | Monster Digital | -
+485 | Hardcover Journal Matte | 28 | District Photo | -
+488 | Desk Mat | 1 | SPOKE Custom Products | -
+538 | Spun Polyester Lumbar Pillow | 10 | MWW On Demand | -
+561 | Infant Baby Rib Bodysuit | 39 | SwiftPOD | -
+561 | Infant Baby Rib Bodysuit | 99 | Printify Choice | -
+561 | Infant Baby Rib Bodysuit | 70 | Printed Mint | -
+580 | Toddler Short Sleeve Tee | 61 | Dimona Tee | -
+580 | Toddler Short Sleeve Tee | 99 | Printify Choice | -
+580 | Toddler Short Sleeve Tee | 39 | SwiftPOD | -
+635 | Accent Coffee Mug (11, 15oz) | 99 | Printify Choice | -
+635 | Accent Coffee Mug (11, 15oz) | 94 | Harrier | -
+635 | Accent Coffee Mug (11, 15oz) | 28 | District Photo | -
+635 | Accent Coffee Mug (11, 15oz) | 39 | SwiftPOD | -
+759 | Wall Decals | 73 | Printed Simply | -
+938 | Glass Cutting Board | 92 | Pic the Gift | -
+944 | Matte Canvas, Framed (Multi-color) | 105 | Jondo | -
+944 | Matte Canvas, Framed (Multi-color) | 99 | Printify Choice | -
+1002 | Table Runner (Cotton, Poly) | 10 | MWW On Demand | -
+1048 | Scented Soy Candle, 9oz | 219 | Lumient | -
+1159 | Matte Canvas, Stretched, 1.25" | 105 | Jondo | -
+1159 | Matte Canvas, Stretched, 1.25" | 99 | Printify Choice | -
+1206 | Metal Art Sign | 228 | Taylor | -
+1208 | Foam Board | 228 | Taylor | -
+1220 | Rolled Posters | 105 | Jondo | -
+1220 | Rolled Posters | 99 | Printify Choice | -
+1313 | Cotton Canvas Tote Bag | 29 | Monster Digital | -
+1313 | Cotton Canvas Tote Bag | 99 | Printify Choice | -
+1389 | Tote Bag (AOP) | 10 | MWW On Demand | -
+1447 | Classic Dad Cap | 99 | Printify Choice | -
+1447 | Classic Dad Cap | 217 | Fulfill Engine | -
+1468 | Scented Soy Candle (Multi-Size, Amber Jar) | 219 | Lumient | -
+1498 | Insulated Travel Mug, 40oz | 217 | Fulfill Engine | -
+1521 | Tough Magnetic Cases | 23 | WOYC | -
+1530 | Wood Signs | 70 | Printed Mint | -
+1997 | Whiskey Glass, 10.5oz (Engraving) | 217 | Fulfill Engine | -
+1305 | Acrylic Wall Clock | 104 | Acrylic Idea Factory | -
