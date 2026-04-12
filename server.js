@@ -625,7 +625,7 @@ PRODUCT TECHNICAL DETAILS: ${bpData.description || 'N/A'}
 
 Analyze the design image and create an optimized Etsy listing.
 
-TITLE: keyword chaining, 110-140 chars, no punctuation, first words = product noun, include gift terms.
+TITLE: keyword chaining, minimum 130 characters, maximum 140 characters, no punctuation, first words = product noun, include gift terms. If title is too short, add more relevant keywords from the keyword bank to reach minimum length.
 DESCRIPTION: SEO layer → Key Features (✦ bullets, include product technical specs) → Processing 3-10 days → Care Instructions → "Discover more at https://jewselry.etsy.com. Follow @jewselry_world"
 TAGS: exactly 13, max 20 chars, from title keywords, prefer high-volume from keyword bank.
 
