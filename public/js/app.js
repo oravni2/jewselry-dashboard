@@ -195,6 +195,42 @@ document.getElementById('btn-copy-reply').addEventListener('click', () => {
   });
 });
 
+// Save CS message as task
+document.getElementById('btn-save-cs-task').addEventListener('click', async () => {
+  const customerMsg = document.getElementById('cs-customer-msg').value.trim();
+  if (!customerMsg) return alert('יש להזין הודעת לקוח');
+
+  const davidNotes = document.getElementById('cs-david-notes').value.trim();
+  const btn = document.getElementById('btn-save-cs-task');
+  btn.disabled = true;
+
+  // Find or create "שירות לקוחות" category
+  let catId = null;
+  const cats = await api('/api/categories');
+  if (Array.isArray(cats)) {
+    const existing = cats.find(c => c.name === 'שירות לקוחות');
+    if (existing) {
+      catId = existing.id;
+    } else {
+      const newCat = await api('/api/categories', { method: 'POST', body: { name: 'שירות לקוחות', color: '#3b82f6' } });
+      if (newCat.id) catId = newCat.id;
+    }
+  }
+
+  const title = 'מענה ללקוח — ' + customerMsg.slice(0, 50);
+  const description = 'הודעת לקוח:\n' + customerMsg + (davidNotes ? '\n\nהערות:\n' + davidNotes : '');
+
+  await api('/api/tasks', {
+    method: 'POST',
+    body: { title, description, assigned_to: 'david', category_id: catId },
+  });
+
+  const msg = document.getElementById('cs-task-saved-msg');
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  btn.disabled = false;
+});
+
 // ---- Settings ----
 async function loadSettings() {
   // Load system prompt
