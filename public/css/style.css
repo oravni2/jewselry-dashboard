@@ -1624,6 +1624,20 @@ textarea.listing-output-field {
   text-decoration: underline;
 }
 
+.design-result-image img {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+#design-ref-img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
 /* ============================================
    Animations
    ============================================ */

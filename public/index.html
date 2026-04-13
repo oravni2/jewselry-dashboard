@@ -582,6 +582,15 @@
         <p class="page-subtitle">יצירת מוצרים בפרינטיפיי</p>
       </div>
     </div>
+
+    <!-- POD Tab Bar -->
+    <div class="sales-tab-bar">
+      <button class="sales-tab active" data-pod-tab="pod-products-tab">מחולל מוצרים</button>
+      <button class="sales-tab" data-pod-tab="pod-design-tab">מחולל עיצוב</button>
+    </div>
+
+    <!-- Products Tab -->
+    <div id="pod-products-tab" class="sales-tab-content active">
     <div class="pod-wizard">
       <!-- Step 1: Upload Design -->
       <div class="card pod-step" id="pod-step-1">
@@ -639,6 +648,77 @@
         <div id="pod-results-list" class="pod-results-list"></div>
       </div>
     </div>
+    </div>
+
+    <!-- Design Generator Tab -->
+    <div id="pod-design-tab" class="sales-tab-content" style="display:none;">
+      <div class="pod-wizard">
+        <div class="card pod-step">
+          <div class="pod-step-header">
+            <span class="pod-step-num">1</span>
+            <h3>תמונת ייחוס</h3>
+          </div>
+          <div class="listing-image-drop" id="design-ref-drop">
+            <input type="file" id="design-ref-input" accept="image/*" class="file-input-hidden">
+            <div id="design-ref-preview" style="display:none;">
+              <img id="design-ref-img" alt="">
+            </div>
+            <div id="design-ref-placeholder">
+              <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+              <span class="file-drop-text">לחץ או גרור תמונת ייחוס לכאן</span>
+            </div>
+          </div>
+        </div>
+        <div class="card pod-step">
+          <div class="pod-step-header">
+            <span class="pod-step-num">2</span>
+            <h3>הגדרות</h3>
+          </div>
+          <div class="form-group">
+            <label for="design-style-notes">הערות סגנון <span class="label-hint">(אופציונלי)</span></label>
+            <textarea id="design-style-notes" rows="3" placeholder="צבעים חמים, סגנון מודרני..."></textarea>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="btn-midjourney-prompt" style="flex:1;">צור פרומפט למידג'רני</button>
+            <button class="btn btn-primary" id="btn-dalle-generate" style="flex:1;">צור עיצוב עם DALL-E</button>
+          </div>
+        </div>
+        <div id="design-loading" class="loading" style="display:none;"><span class="spinner"></span>מייצר...</div>
+        <!-- Midjourney Result -->
+        <div id="mj-result" class="card pod-step" style="display:none;">
+          <div class="pod-step-header">
+            <span class="pod-step-num pod-step-success">✓</span>
+            <h3>Midjourney Prompt</h3>
+          </div>
+          <div class="listing-field-group">
+            <div class="listing-field-header">
+              <label>פרומפט</label>
+              <button class="btn btn-copy" id="btn-copy-mj-prompt">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                העתק
+              </button>
+            </div>
+            <textarea id="mj-prompt-text" class="listing-output-field" rows="6" readonly></textarea>
+          </div>
+        </div>
+        <!-- DALL-E Result -->
+        <div id="dalle-result" class="card pod-step" style="display:none;">
+          <div class="pod-step-header">
+            <span class="pod-step-num pod-step-success">✓</span>
+            <h3>DALL-E Generated Design</h3>
+          </div>
+          <div class="design-result-image">
+            <img id="dalle-result-img" alt="">
+          </div>
+          <a class="btn btn-primary" id="btn-download-dalle" download="jewselry-design.png" style="margin-top:0.75rem;">הורד עיצוב</a>
+          <div class="form-group" style="margin-top:0.75rem;">
+            <label>פרומפט שנוצר</label>
+            <div id="dalle-prompt-used" class="cs-text" style="font-size:0.8rem; color:var(--stone-500);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- Settings Page -->

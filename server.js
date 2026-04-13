@@ -750,6 +750,71 @@ OUTPUT JSON ONLY — no markdown:
   }
 });
 
+// ---- DESIGN GENERATOR API ----
+
+app.post('/api/design/midjourney-prompt', async (req, res) => {
+  const { image, style_notes } = req.body;
+  if (!image) return res.status(400).json({ error: 'Image is required' });
+  try {
+    const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+    const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+    let userText = 'Analyze this reference image and write a detailed Midjourney prompt to recreate a similar design.';
+    if (style_notes) userText += `\n\nStyle notes from the user: ${style_notes}`;
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: 'You are an expert Midjourney prompt writer specializing in Jewish art, Judaica, and Israeli themes. Analyze the reference image and write a detailed Midjourney prompt that would recreate a similar design. Include: art style, colors, composition, mood, Jewish/Israeli themes visible. Format: /imagine prompt: [detailed prompt] --ar [aspect ratio] --v 6.1',
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+        { type: 'text', text: userText },
+      ]}]
+    });
+    res.json({ prompt: msg.content[0].text });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/design/dalle-generate', async (req, res) => {
+  const { image, style_notes } = req.body;
+  if (!image) return res.status(400).json({ error: 'Image is required' });
+  if (!process.env.OPENAI_API_KEY) return res.status(400).json({ error: 'OPENAI_API_KEY not configured' });
+  try {
+    // Step 1: Get Claude to write a DALL-E prompt
+    const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+    const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+    let userText = 'Analyze this image and write a DALL-E 3 prompt to create a similar design. Return ONLY the prompt text, no explanation.';
+    if (style_notes) userText += `\n\nStyle notes: ${style_notes}`;
+
+    const claudeMsg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 512,
+      system: 'You write concise, effective DALL-E 3 prompts for Jewish art and Judaica designs. Return only the prompt text.',
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+        { type: 'text', text: userText },
+      ]}]
+    });
+    const dallePrompt = claudeMsg.content[0].text;
+
+    // Step 2: Call DALL-E
+    const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'dall-e-3', prompt: dallePrompt, size: '1024x1024', quality: 'standard', n: 1 })
+    });
+    if (!dalleRes.ok) {
+      const err = await dalleRes.json().catch(() => ({}));
+      return res.status(dalleRes.status).json({ error: err.error?.message || 'DALL-E generation failed' });
+    }
+    const dalleData = await dalleRes.json();
+    res.json({ image_url: dalleData.data[0].url, prompt_used: dallePrompt });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- LISTING GENERATOR API ----
 
 app.post('/api/listing/generate', async (req, res) => {

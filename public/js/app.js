@@ -1452,6 +1452,18 @@ document.querySelectorAll('.listing-copy-btn').forEach(btn => {
   });
 });
 
+// POD tab switching
+document.querySelectorAll('[data-pod-tab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-pod-tab]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('#page-pod .sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+    const target = document.getElementById(tab.dataset.podTab);
+    target.classList.add('active');
+    target.style.display = 'block';
+  });
+});
+
 // ---- POD (Print on Demand) ----
 let podImageBase64 = null;
 let podProducts = [];
@@ -1622,6 +1634,89 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
     btn.disabled = false;
     loadingDiv.style.display = 'none';
   }
+});
+
+// ---- Design Generator ----
+let designRefBase64 = null;
+
+const designRefDrop = document.getElementById('design-ref-drop');
+const designRefInput = document.getElementById('design-ref-input');
+designRefDrop.addEventListener('click', () => designRefInput.click());
+designRefDrop.addEventListener('dragover', (e) => { e.preventDefault(); designRefDrop.classList.add('dragover'); });
+designRefDrop.addEventListener('dragleave', () => designRefDrop.classList.remove('dragover'));
+designRefDrop.addEventListener('drop', (e) => {
+  e.preventDefault(); designRefDrop.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleDesignRef(file);
+});
+designRefInput.addEventListener('change', (e) => { if (e.target.files[0]) handleDesignRef(e.target.files[0]); });
+
+function handleDesignRef(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    designRefBase64 = e.target.result;
+    document.getElementById('design-ref-img').src = designRefBase64;
+    document.getElementById('design-ref-preview').style.display = 'block';
+    document.getElementById('design-ref-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Midjourney prompt
+document.getElementById('btn-midjourney-prompt').addEventListener('click', async () => {
+  if (!designRefBase64) return alert('יש להעלות תמונת ייחוס');
+  const btn = document.getElementById('btn-midjourney-prompt');
+  const loading = document.getElementById('design-loading');
+  btn.disabled = true;
+  loading.style.display = 'flex';
+  document.getElementById('mj-result').style.display = 'none';
+  document.getElementById('dalle-result').style.display = 'none';
+
+  try {
+    const notes = document.getElementById('design-style-notes').value.trim();
+    const result = await api('/api/design/midjourney-prompt', {
+      method: 'POST',
+      body: { image: designRefBase64, style_notes: notes || undefined },
+    });
+    if (result.error) { alert('שגיאה: ' + result.error); return; }
+    document.getElementById('mj-prompt-text').value = result.prompt;
+    document.getElementById('mj-result').style.display = 'block';
+  } catch (err) { alert('שגיאה: ' + err.message); }
+  finally { btn.disabled = false; loading.style.display = 'none'; }
+});
+
+document.getElementById('btn-copy-mj-prompt').addEventListener('click', () => {
+  const text = document.getElementById('mj-prompt-text').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy-mj-prompt');
+    btn.textContent = 'הועתק!';
+    setTimeout(() => { btn.textContent = 'העתק'; }, 1500);
+  });
+});
+
+// DALL-E generate
+document.getElementById('btn-dalle-generate').addEventListener('click', async () => {
+  if (!designRefBase64) return alert('יש להעלות תמונת ייחוס');
+  const btn = document.getElementById('btn-dalle-generate');
+  const loading = document.getElementById('design-loading');
+  btn.disabled = true;
+  loading.style.display = 'flex';
+  document.getElementById('mj-result').style.display = 'none';
+  document.getElementById('dalle-result').style.display = 'none';
+
+  try {
+    const notes = document.getElementById('design-style-notes').value.trim();
+    const result = await api('/api/design/dalle-generate', {
+      method: 'POST',
+      body: { image: designRefBase64, style_notes: notes || undefined },
+    });
+    if (result.error) { alert('שגיאה: ' + result.error); return; }
+    document.getElementById('dalle-result-img').src = result.image_url;
+    document.getElementById('btn-download-dalle').href = result.image_url;
+    document.getElementById('dalle-prompt-used').textContent = result.prompt_used;
+    document.getElementById('dalle-result').style.display = 'block';
+  } catch (err) { alert('שגיאה: ' + err.message); }
+  finally { btn.disabled = false; loading.style.display = 'none'; }
 });
 
 // ---- Util ----
