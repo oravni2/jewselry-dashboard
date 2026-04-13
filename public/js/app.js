@@ -1706,7 +1706,7 @@ function renderPhysicalProducts(products) {
     const badgeText = p.quantity === 0 ? 'אזל' : p.quantity < 5 ? 'נמוך' : 'תקין';
     return `<tr class="${stockClass}">
       <td>${escapeHtml(p.sku)}</td>
-      <td class="diamond-item-name">${escapeHtml(p.name)}</td>
+      <td class="inv-col-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</td>
       <td><input class="inv-inline-input" type="number" step="0.01" value="${p.cost || 0}" data-id="${p.id}" data-field="cost" onchange="updateProduct(this)"></td>
       <td><input class="inv-inline-input" type="number" step="0.01" value="${p.shipping_cost || 0}" data-id="${p.id}" data-field="shipping_cost" onchange="updateProduct(this)"></td>
       <td>
@@ -1728,7 +1728,7 @@ function renderPodProducts(products) {
   }
   tbody.innerHTML = products.map(p => `<tr>
     <td>${escapeHtml(p.sku)}</td>
-    <td class="diamond-item-name">${escapeHtml(p.name)}</td>
+    <td class="inv-col-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</td>
     <td>${p.printify_cost ? '$' + Number(p.printify_cost).toFixed(2) : '-'}</td>
     <td>${p.printify_shipping_cost ? '$' + Number(p.printify_shipping_cost).toFixed(2) : '-'}</td>
   </tr>`).join('');

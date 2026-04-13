@@ -1542,10 +1542,13 @@ textarea.listing-output-field {
 }
 
 .diamond-item-name {
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
 }
+
+.inv-col-sku { width: 130px; }
+.inv-col-name { min-width: 280px; }
+.inv-col-num { width: 100px; }
 
 .diamond-variations {
   max-width: 180px;
