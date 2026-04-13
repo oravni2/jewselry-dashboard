@@ -202,5 +202,40 @@ ALTER TABLE etsy_payments DISABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_etsy_payments_month ON etsy_payments(report_month);
 CREATE INDEX IF NOT EXISTS idx_etsy_payments_order ON etsy_payments(order_id);
 
+-- Products / Inventory tables
+CREATE TABLE IF NOT EXISTS products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  sku text UNIQUE NOT NULL,
+  name text NOT NULL,
+  type text NOT NULL CHECK (type IN ('physical', 'pod')),
+  cost numeric DEFAULT 0,
+  shipping_cost numeric DEFAULT 17,
+  quantity integer DEFAULT 0,
+  quantity_snapshot_at timestamptz,
+  printify_blueprint_id integer,
+  printify_provider_id integer,
+  printify_cost numeric,
+  printify_shipping_cost numeric,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS inventory_movements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id uuid REFERENCES products(id),
+  order_id text NOT NULL,
+  quantity_change integer NOT NULL,
+  report_month text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(order_id, product_id)
+);
+
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+ALTER TABLE inventory_movements DISABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_product ON inventory_movements(product_id);
+
+INSERT INTO settings (key, value) VALUES ('default_physical_shipping', '17') ON CONFLICT (key) DO NOTHING;
+
 -- Listing generator prompt
 INSERT INTO settings (key, value) VALUES ('listing_system_prompt', '') ON CONFLICT (key) DO NOTHING;

@@ -750,6 +750,164 @@ OUTPUT JSON ONLY — no markdown:
   }
 });
 
+// ---- INVENTORY / PRODUCTS API ----
+
+app.get('/api/products', async (req, res) => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('type', { ascending: true })
+    .order('name', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/products', async (req, res) => {
+  const { sku, name, type, cost, shipping_cost, quantity, printify_blueprint_id, printify_provider_id } = req.body;
+  if (!sku || !name || !type) return res.status(400).json({ error: 'sku, name, and type are required' });
+  const { data, error } = await supabase
+    .from('products')
+    .insert({ sku, name, type, cost: cost || 0, shipping_cost: shipping_cost || 17, quantity: quantity || 0, printify_blueprint_id, printify_provider_id })
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.patch('/api/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const { data, error } = await supabase
+    .from('products')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/products/sync-from-sales', async (req, res) => {
+  // Get all unique SKUs from etsy_sales
+  const { data: sales } = await supabase.from('etsy_sales').select('sku, item_name');
+  if (!sales) return res.json({ created: 0, skipped: 0 });
+
+  // Get existing SKUs
+  const { data: existing } = await supabase.from('products').select('sku');
+  const existingSkus = new Set((existing || []).map(p => p.sku));
+
+  // Get default shipping cost
+  const { data: shippingSetting } = await supabase.from('settings').select('value').eq('key', 'default_physical_shipping').single();
+  const defaultShipping = parseFloat(shippingSetting?.value) || 17;
+
+  // Group by SKU, take first item_name
+  const skuMap = {};
+  sales.forEach(s => {
+    if (!s.sku || s.sku.trim() === '') return;
+    if (!skuMap[s.sku]) skuMap[s.sku] = s.item_name;
+  });
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const [sku, itemName] of Object.entries(skuMap)) {
+    if (existingSkus.has(sku)) { skipped++; continue; }
+
+    let type = 'physical';
+    let shippingCost = defaultShipping;
+    if (/^\d+$/.test(sku)) {
+      type = 'pod';
+      shippingCost = 0;
+    } else if (sku.startsWith('JS')) {
+      type = 'physical';
+      shippingCost = defaultShipping;
+    }
+
+    const { error } = await supabase.from('products').insert({
+      sku, name: itemName || sku, type, shipping_cost: shippingCost,
+    });
+    if (!error) created++;
+    else skipped++;
+  }
+
+  res.json({ created, skipped });
+});
+
+app.post('/api/products/apply-sales/:month', async (req, res) => {
+  const { month } = req.params;
+
+  // Get physical products with snapshot
+  const { data: products } = await supabase.from('products').select('*').eq('type', 'physical');
+  if (!products || !products.length) return res.json({ updated: 0, skipped: 0 });
+
+  const productBySku = {};
+  products.forEach(p => { productBySku[p.sku] = p; });
+
+  // Get sales for month
+  const { data: sales } = await supabase.from('etsy_sales').select('*').eq('report_month', month);
+
+  let updated = 0;
+  let skipped = 0;
+
+  for (const sale of (sales || [])) {
+    if (!sale.sku) { skipped++; continue; }
+    const product = productBySku[sale.sku];
+    if (!product) { skipped++; continue; }
+    if (!product.quantity_snapshot_at) { skipped++; continue; }
+
+    // Check if sale is after snapshot
+    const saleDate = new Date(sale.sale_date);
+    const snapshotDate = new Date(product.quantity_snapshot_at);
+    if (saleDate < snapshotDate) { skipped++; continue; }
+
+    // Check for duplicate movement
+    const { data: existingMov } = await supabase.from('inventory_movements')
+      .select('id').eq('order_id', sale.order_id).eq('product_id', product.id).single();
+    if (existingMov) { skipped++; continue; }
+
+    // Insert movement and update quantity
+    const qty = -(sale.quantity || 1);
+    await supabase.from('inventory_movements').insert({
+      product_id: product.id, order_id: sale.order_id, quantity_change: qty, report_month: month,
+    });
+    await supabase.from('products').update({ quantity: product.quantity + qty }).eq('id', product.id);
+    product.quantity += qty; // update local reference
+    updated++;
+  }
+
+  res.json({ updated, skipped });
+});
+
+app.post('/api/products/generate-sku', async (req, res) => {
+  // Find highest JS-XXX SKU
+  const { data } = await supabase.from('products').select('sku').like('sku', 'JS-%').order('sku', { ascending: false });
+  let nextNum = 1;
+  if (data && data.length > 0) {
+    const nums = data.map(p => parseInt(p.sku.replace('JS-', ''), 10)).filter(n => !isNaN(n));
+    if (nums.length > 0) nextNum = Math.max(...nums) + 1;
+  }
+  const sku = 'JS-' + String(nextNum).padStart(3, '0');
+  res.json({ sku });
+});
+
+app.get('/api/products/missing-skus', async (req, res) => {
+  const { data } = await supabase.from('etsy_sales')
+    .select('item_name, quantity')
+    .or('sku.is.null,sku.eq.');
+
+  if (!data) return res.json([]);
+
+  // Group by item_name
+  const grouped = {};
+  data.forEach(s => {
+    const name = s.item_name || '(ללא שם)';
+    if (!grouped[name]) grouped[name] = { name, count: 0 };
+    grouped[name].count += s.quantity || 1;
+  });
+
+  res.json(Object.values(grouped).sort((a, b) => b.count - a.count));
+});
+
 // ---- DESIGN GENERATOR API ----
 
 app.post('/api/design/midjourney-prompt', async (req, res) => {
