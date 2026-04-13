@@ -758,13 +758,15 @@ app.post('/api/design/midjourney-prompt', async (req, res) => {
   try {
     const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
     const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
-    let userText = 'Analyze this reference image and write a detailed Midjourney prompt to recreate a similar design.';
-    if (style_notes) userText += `\n\nStyle notes from the user: ${style_notes}`;
+    let userText = `Reference image analysis request. Style notes from user: ${style_notes || 'none provided'}`;
+
+    let mjSystem = 'You are an expert Midjourney prompt writer specializing in Jewish art, Judaica, and Israeli themes. Analyze the reference image and write a detailed Midjourney prompt that would recreate a similar design. Include: art style, colors, composition, mood, Jewish/Israeli themes visible. Format: /imagine prompt: [detailed prompt] --ar [aspect ratio] --v 6.1';
+    if (style_notes) mjSystem += `\n\nIMPORTANT: The user has provided specific style notes that MUST be reflected in the output: ${style_notes}. These override default style choices.`;
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
-      system: 'You are an expert Midjourney prompt writer specializing in Jewish art, Judaica, and Israeli themes. Analyze the reference image and write a detailed Midjourney prompt that would recreate a similar design. Include: art style, colors, composition, mood, Jewish/Israeli themes visible. Format: /imagine prompt: [detailed prompt] --ar [aspect ratio] --v 6.1',
+      system: mjSystem,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
         { type: 'text', text: userText },
@@ -784,25 +786,28 @@ app.post('/api/design/dalle-generate', async (req, res) => {
     // Step 1: Get Claude to write a DALL-E prompt
     const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
     const mediaType = image.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
-    let userText = 'Analyze this image and write a DALL-E 3 prompt to create a similar design. Return ONLY the prompt text, no explanation.';
-    if (style_notes) userText += `\n\nStyle notes: ${style_notes}`;
+    let userText = `Reference image analysis request. Style notes from user: ${style_notes || 'none provided'}. Return ONLY the prompt text, no explanation.`;
+
+    let dalleSystem = 'You write concise, effective DALL-E 3 prompts for Jewish art and Judaica designs. Return only the prompt text.';
+    if (style_notes) dalleSystem += `\n\nIMPORTANT: The user has provided specific style notes that MUST be reflected in the output: ${style_notes}. These override default style choices.`;
 
     const claudeMsg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 512,
-      system: 'You write concise, effective DALL-E 3 prompts for Jewish art and Judaica designs. Return only the prompt text.',
+      system: dalleSystem,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
         { type: 'text', text: userText },
       ]}]
     });
     const dallePrompt = claudeMsg.content[0].text;
+    const finalDallePrompt = style_notes ? dallePrompt + '. ' + style_notes : dallePrompt;
 
     // Step 2: Call DALL-E
     const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'dall-e-3', prompt: dallePrompt, size: '1024x1024', quality: 'standard', n: 1 })
+      body: JSON.stringify({ model: 'dall-e-3', prompt: finalDallePrompt, size: '1024x1024', quality: 'standard', n: 1 })
     });
     if (!dalleRes.ok) {
       const err = await dalleRes.json().catch(() => ({}));
