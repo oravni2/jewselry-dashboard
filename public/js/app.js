@@ -134,7 +134,12 @@ document.getElementById('btn-save-task-notes').addEventListener('click', async (
   if (!notes) return;
   const now = new Date().toLocaleDateString('he-IL');
   const updated = (currentTaskDetail.description || '') + '\n\n[' + now + '] ' + notes;
-  await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { description: updated } });
+  console.log('Saving notes for task:', currentTaskDetail?.id, 'notes:', notes);
+  const result = await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { description: updated } });
+  if (result.error) {
+    alert('שגיאה בשמירת הערות: ' + result.error);
+    return;
+  }
   document.getElementById('task-detail-desc').textContent = updated;
   document.getElementById('task-detail-notes').value = '';
   currentTaskDetail.description = updated;
