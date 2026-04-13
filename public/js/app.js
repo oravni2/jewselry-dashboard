@@ -673,8 +673,8 @@ function renderDailyChart(rows, month) {
       datasets: [{
         label: 'הכנסות ($)',
         data,
-        backgroundColor: 'rgba(202, 138, 4, 0.6)',
-        borderColor: 'rgba(161, 98, 7, 0.8)',
+        backgroundColor: 'rgba(92, 122, 94, 0.6)',
+        borderColor: 'rgba(74, 106, 76, 0.8)',
         borderWidth: 1,
         borderRadius: 3,
       }]
