@@ -30,61 +30,75 @@ document.querySelectorAll('.nav-link').forEach(link => {
   });
 });
 
-// ---- Tasks ----
+// ---- Tasks (Kanban) ----
+let allTasks = [];
+
 async function loadTasks() {
   const showAll = document.getElementById('show-all-tasks').checked;
-  const showDone = document.getElementById('show-done-tasks').checked;
-
   let url = '/api/tasks?';
   if (!showAll) url += 'assigned_to=david&';
-  if (!showDone) url += 'status=open&';
 
-  const tasks = await api(url);
-  renderTasks(tasks);
+  allTasks = await api(url);
+  renderKanban();
 }
 
-function renderTasks(tasks) {
-  const container = document.getElementById('tasks-list');
+function renderKanban() {
+  const search = (document.getElementById('kanban-search')?.value || '').trim().toLowerCase();
+  const tasks = Array.isArray(allTasks) ? allTasks : [];
 
-  if (!Array.isArray(tasks) || tasks.length === 0) {
-    container.innerHTML = '<div class="empty-state">אין משימות להצגה</div>';
-    return;
-  }
+  const filtered = search
+    ? tasks.filter(t => t.title.toLowerCase().includes(search) || (t.description || '').toLowerCase().includes(search))
+    : tasks;
 
-  container.innerHTML = tasks.map(task => {
-    const isDone = task.status === 'done';
-    const cat = task.categories;
-    const catDot = cat
-      ? `<div class="cat-dot" style="background:${cat.color}" title="${cat.name}"></div>`
-      : '';
-    const dueDateStr = task.due_date
-      ? new Date(task.due_date).toLocaleDateString('he-IL')
-      : '';
-    const assignedName = task.assigned_to === 'david' ? 'דוד' : 'אור';
+  const columns = { open: [], in_progress: [], done: [] };
+  filtered.forEach(t => {
+    const col = columns[t.status] || columns.open;
+    col.push(t);
+  });
 
-    return `
-      <div class="task-card ${isDone ? 'done' : ''}" data-id="${task.id}">
-        <button class="task-check" onclick="toggleTask('${task.id}', '${task.status}')" title="${isDone ? 'סמן כפתוח' : 'סמן כהושלם'}"></button>
-        ${catDot}
-        <div class="task-body" style="cursor:pointer;" onclick="openTaskDetail('${task.id}')">
-          <div class="task-title">${escapeHtml(task.title)}</div>
-          <div class="task-meta">
-            ${task.description ? `<span>${escapeHtml(task.description.length > 60 ? task.description.slice(0, 60) + '...' : task.description)}</span>` : ''}
-            ${dueDateStr ? `<span>${dueDateStr}</span>` : ''}
-          </div>
+  const priorityIcons = { urgent: '🔴', high: '🟠', normal: '⚪', low: '🔵' };
+  const statusOrder = ['open', 'in_progress', 'done'];
+
+  for (const status of statusOrder) {
+    const container = document.getElementById('kanban-' + status);
+    const tasks = columns[status];
+    if (!tasks.length) {
+      container.innerHTML = '<div class="empty-state" style="padding:1.5rem; font-size:0.8rem;">אין משימות</div>';
+      continue;
+    }
+    container.innerHTML = tasks.map(task => {
+      const cat = task.categories;
+      const catPill = cat ? `<span class="kanban-cat-pill" style="background:${cat.color}">${escapeHtml(cat.name)}</span>` : '';
+      const priorityIcon = priorityIcons[task.priority] || '⚪';
+      const avatar = task.assigned_to === 'david' ? 'ד' : 'א';
+      const statusIdx = statusOrder.indexOf(task.status);
+      const canMoveRight = statusIdx < 2;
+      const canMoveLeft = statusIdx > 0;
+
+      return `<div class="kanban-card" onclick="openTaskDetail('${task.id}')">
+        <div class="kanban-card-title">${escapeHtml(task.title)}</div>
+        <div class="kanban-card-meta">
+          <span class="kanban-priority">${priorityIcon}</span>
+          ${catPill}
+          <span class="kanban-avatar">${avatar}</span>
         </div>
-        <span class="task-assigned-badge">${assignedName}</span>
-      </div>
-    `;
-  }).join('');
+        <div class="kanban-card-actions" onclick="event.stopPropagation()">
+          ${canMoveLeft ? `<button class="kanban-move-btn" onclick="moveTask('${task.id}','${statusOrder[statusIdx - 1]}')" title="הזז שמאלה">←</button>` : ''}
+          ${canMoveRight ? `<button class="kanban-move-btn" onclick="moveTask('${task.id}','${statusOrder[statusIdx + 1]}')" title="הזז ימינה">→</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
+
+window.moveTask = async function(id, newStatus) {
+  await api('/api/tasks/' + id, { method: 'PATCH', body: { status: newStatus } });
+  loadTasks();
+};
 
 async function toggleTask(id, currentStatus) {
   const newStatus = currentStatus === 'open' ? 'done' : 'open';
-  await api('/api/tasks/' + id, {
-    method: 'PATCH',
-    body: { status: newStatus },
-  });
+  await api('/api/tasks/' + id, { method: 'PATCH', body: { status: newStatus } });
   loadTasks();
 }
 
@@ -134,9 +148,9 @@ document.getElementById('btn-task-done').addEventListener('click', async () => {
   loadTasks();
 });
 
-// Filter change listeners
+// Filter & search listeners
 document.getElementById('show-all-tasks').addEventListener('change', loadTasks);
-document.getElementById('show-done-tasks').addEventListener('change', loadTasks);
+document.getElementById('kanban-search').addEventListener('input', renderKanban);
 
 // Add task modal
 const taskModal = document.getElementById('task-modal');
@@ -166,6 +180,7 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     due_date: document.getElementById('task-due').value || null,
     category_id: document.getElementById('task-category').value || null,
     assigned_to: document.getElementById('task-assigned').value,
+    priority: document.getElementById('task-priority').value || 'normal',
   };
 
   if (id) {
@@ -185,6 +200,30 @@ function populateCategorySelect() {
     select.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
   });
 }
+
+// AI category suggestion (debounced)
+let aiCatTimer = null;
+document.getElementById('task-title').addEventListener('input', (e) => {
+  clearTimeout(aiCatTimer);
+  const title = e.target.value.trim();
+  if (title.length < 5) { document.getElementById('task-ai-category').style.display = 'none'; return; }
+  aiCatTimer = setTimeout(async () => {
+    const result = await api('/api/tasks/0/ai-category', { method: 'POST', body: { title } });
+    if (result.category) {
+      const el = document.getElementById('task-ai-category');
+      el.textContent = `הצעת קטגוריה: ${result.category}`;
+      el.style.display = 'block';
+      el.style.cursor = 'pointer';
+      el.onclick = () => {
+        // Try to select matching category
+        const select = document.getElementById('task-category');
+        const match = [...select.options].find(o => o.textContent === result.category);
+        if (match) select.value = match.value;
+        el.style.display = 'none';
+      };
+    }
+  }, 800);
+});
 
 // ---- Customer Service ----
 document.getElementById('btn-generate-reply').addEventListener('click', async () => {

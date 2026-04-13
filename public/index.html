@@ -64,20 +64,27 @@
         משימה חדשה
       </button>
     </div>
-    <div class="filters-bar">
+    <div class="kanban-toolbar">
+      <input type="text" id="kanban-search" placeholder="חיפוש משימות..." class="kanban-search">
       <label class="toggle-label">
         <input type="checkbox" id="show-all-tasks">
         <span class="toggle-switch"></span>
         <span class="toggle-text">הצג את כל המשימות</span>
       </label>
-      <label class="toggle-label">
-        <input type="checkbox" id="show-done-tasks">
-        <span class="toggle-switch"></span>
-        <span class="toggle-text">הצג משימות שהושלמו</span>
-      </label>
     </div>
-    <div id="tasks-list" class="tasks-list">
-      <div class="loading"><span class="spinner"></span>טוען...</div>
+    <div class="kanban-board">
+      <div class="kanban-column">
+        <div class="kanban-column-header kanban-header-open">לביצוע</div>
+        <div class="kanban-cards" id="kanban-open"></div>
+      </div>
+      <div class="kanban-column">
+        <div class="kanban-column-header kanban-header-progress">בתהליך</div>
+        <div class="kanban-cards" id="kanban-in_progress"></div>
+      </div>
+      <div class="kanban-column">
+        <div class="kanban-column-header kanban-header-done">הושלם</div>
+        <div class="kanban-cards" id="kanban-done"></div>
+      </div>
     </div>
   </main>
 
@@ -911,12 +918,24 @@
             </select>
           </div>
         </div>
-        <div class="form-group">
-          <label for="task-category">קטגוריה</label>
-          <select id="task-category">
-            <option value="">ללא</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-priority">עדיפות</label>
+            <select id="task-priority">
+              <option value="normal">רגיל</option>
+              <option value="low">נמוך</option>
+              <option value="high">גבוה</option>
+              <option value="urgent">דחוף</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-category">קטגוריה</label>
+            <select id="task-category">
+              <option value="">ללא</option>
+            </select>
+          </div>
         </div>
+        <div id="task-ai-category" class="task-ai-suggestion" style="display:none;"></div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">שמור משימה</button>
           <button type="button" class="btn btn-ghost" id="btn-cancel-task">ביטול</button>
