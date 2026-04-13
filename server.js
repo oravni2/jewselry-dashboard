@@ -681,6 +681,42 @@ OUTPUT JSON ONLY — no markdown:
     }
     console.log(`[Printify] Using placeholder position: ${placeholderPosition}`);
 
+    // Fetch US shipping cost
+    let usShippingCost = 0;
+    try {
+      const shippingRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}/print_providers/${print_provider_id}/shipping.json`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (shippingRes.ok) {
+        const shippingData = await shippingRes.json();
+        const usProfile = (shippingData.profiles || []).find(p =>
+          (p.countries || []).some(c => c === 'US' || c === 'United States')
+        );
+        if (usProfile && usProfile.first_item) {
+          usShippingCost = usProfile.first_item.cost || 0;
+        }
+      }
+      console.log(`[Printify] US shipping cost: ${usShippingCost} cents`);
+    } catch (shipErr) {
+      console.error('[Printify] Failed to fetch shipping:', shipErr.message);
+    }
+
+    // Calculate prices: cost + shipping, multiply by 3, round up to nearest dollar
+    // Cheapest variant gets x2 multiplier instead of x3
+    let cheapestCost = Infinity;
+    const variantCosts = variants.map(v => {
+      const cost = (v.cost || 0) + usShippingCost;
+      if (cost < cheapestCost) cheapestCost = cost;
+      return { ...v, _totalCost: cost };
+    });
+
+    const pricedVariants = variantCosts.map(v => {
+      const multiplier = v._totalCost === cheapestCost ? 2 : 3;
+      const price = Math.ceil((v._totalCost * multiplier) / 100) * 100;
+      return { id: v.id, price: price || 2000, is_enabled: v.is_enabled };
+    });
+    console.log(`[Printify] Cheapest variant cost: ${cheapestCost} cents, price: ${Math.ceil((cheapestCost * 2) / 100) * 100} cents`);
+
     const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -689,7 +725,7 @@ OUTPUT JSON ONLY — no markdown:
         description: finalDescription,
         blueprint_id,
         print_provider_id,
-        variants: variants.map(v => ({ ...v, price: v.price || 2000 })),
+        variants: pricedVariants,
         print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: [{ position: placeholderPosition, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] }] }]
       })
     });
