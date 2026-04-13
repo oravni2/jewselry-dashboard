@@ -919,6 +919,7 @@ app.post('/api/design/midjourney-prompt', async (req, res) => {
     let userText = `Reference image analysis request. Style notes from user: ${style_notes || 'none provided'}`;
 
     let mjSystem = 'You are an expert Midjourney prompt writer specializing in Jewish art, Judaica, and Israeli themes. Analyze the reference image and write a detailed Midjourney prompt that would recreate a similar design. Include: art style, colors, composition, mood, Jewish/Israeli themes visible. Format: /imagine prompt: [detailed prompt] --ar [aspect ratio] --v 6.1';
+    mjSystem += '\n\nIMPORTANT: If the reference image contains Hebrew text, DO NOT include the actual Hebrew words in the Midjourney prompt — Midjourney cannot render Hebrew text. Instead, describe the text element by its position, style, and visual role only. For example: "decorative calligraphic text element at bottom center" or "Hebrew lettering ornament in gold" — never the actual words.';
     if (style_notes) mjSystem += `\n\nIMPORTANT: The user has provided specific style notes that MUST be reflected in the output: ${style_notes}. These override default style choices.`;
 
     const msg = await anthropic.messages.create({
