@@ -778,6 +778,7 @@ document.getElementById('csv-file').addEventListener('change', (e) => {
   if (!file) return;
   document.getElementById('csv-file-name').textContent = file.name;
   parseCSVFile(file);
+  e.target.value = '';
 });
 
 // Drag and drop
@@ -1015,7 +1016,7 @@ taxScreenDrop.addEventListener('drop', (e) => {
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) handleTaxScreenshot(file);
 });
-taxScreenInput.addEventListener('change', (e) => { if (e.target.files[0]) handleTaxScreenshot(e.target.files[0]); });
+taxScreenInput.addEventListener('change', (e) => { if (e.target.files[0]) { handleTaxScreenshot(e.target.files[0]); e.target.value = ''; } });
 
 function handleTaxScreenshot(file) {
   const reader = new FileReader();
@@ -1197,6 +1198,7 @@ document.getElementById('payments-csv-file').addEventListener('change', (e) => {
   if (!file) return;
   document.getElementById('payments-file-name').textContent = file.name;
   parsePaymentsCSV(file);
+  e.target.value = '';
 });
 
 const paymentsDropZone = document.getElementById('payments-drop-zone');
@@ -1369,7 +1371,7 @@ listingDropZone.addEventListener('drop', (e) => {
   if (file && file.type.startsWith('image/')) handleListingImage(file);
 });
 listingImageInput.addEventListener('change', (e) => {
-  if (e.target.files[0]) handleListingImage(e.target.files[0]);
+  if (e.target.files[0]) { handleListingImage(e.target.files[0]); e.target.value = ''; }
 });
 
 function handleListingImage(file) {
@@ -1523,7 +1525,7 @@ podDropZone.addEventListener('drop', (e) => {
   if (file && file.type.startsWith('image/')) handlePodImage(file);
 });
 podImageInput.addEventListener('change', (e) => {
-  if (e.target.files[0]) handlePodImage(e.target.files[0]);
+  if (e.target.files[0]) { handlePodImage(e.target.files[0]); e.target.value = ''; }
 });
 
 function handlePodImage(file) {
@@ -1649,7 +1651,7 @@ designRefDrop.addEventListener('drop', (e) => {
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) handleDesignRef(file);
 });
-designRefInput.addEventListener('change', (e) => { if (e.target.files[0]) handleDesignRef(e.target.files[0]); });
+designRefInput.addEventListener('change', (e) => { if (e.target.files[0]) { handleDesignRef(e.target.files[0]); e.target.value = ''; } });
 
 function handleDesignRef(file) {
   const reader = new FileReader();
