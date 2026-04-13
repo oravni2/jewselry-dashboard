@@ -36,6 +36,10 @@
           <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
           <span>מחולל ליסט</span>
         </a>
+        <a href="#" class="nav-link" data-page="inventory">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+          <span>מלאי</span>
+        </a>
         <a href="#" class="nav-link" data-page="pod">
           <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
           <span>POD</span>
@@ -570,6 +574,73 @@
             <input type="text" id="listing-tags-val" class="listing-output-field" readonly>
           </div>
         </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Inventory Page -->
+  <main id="page-inventory" class="page">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1>מלאי</h1>
+        <p class="page-subtitle">ניהול מוצרים ומלאי</p>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btn-sync-products">סנכרן מוצרים מהמכירות</button>
+      </div>
+    </div>
+
+    <!-- Missing SKUs Section -->
+    <div id="inv-missing-section" class="card sales-section" style="display:none;">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        <h2>מוצרים ללא מק"ט</h2>
+      </div>
+      <div id="inv-missing-list"></div>
+    </div>
+
+    <!-- Physical Products Section -->
+    <div class="card sales-section">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+        <h2>מוצרים פיזיים</h2>
+        <button class="btn btn-small" id="btn-apply-sales" style="margin-right:auto; margin-left:0;">החל מכירות על מלאי</button>
+      </div>
+      <div class="diamond-table-wrap">
+        <table class="diamond-table" id="inv-physical-table">
+          <thead>
+            <tr>
+              <th>מק"ט</th>
+              <th>שם</th>
+              <th>עלות סחורה</th>
+              <th>עלות משלוח</th>
+              <th>כמות במלאי</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="inv-physical-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- POD Products Section -->
+    <div class="card sales-section">
+      <div class="card-header">
+        <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+        <h2>מוצרי POD</h2>
+      </div>
+      <div class="diamond-table-wrap">
+        <table class="diamond-table" id="inv-pod-table">
+          <thead>
+            <tr>
+              <th>מק"ט</th>
+              <th>שם</th>
+              <th>עלות פרינטיפיי</th>
+              <th>משלוח US</th>
+            </tr>
+          </thead>
+          <tbody id="inv-pod-body"></tbody>
+        </table>
       </div>
     </div>
   </main>

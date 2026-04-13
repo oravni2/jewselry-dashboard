@@ -1626,6 +1626,85 @@ textarea.listing-output-field {
   text-decoration: underline;
 }
 
+/* ============================================
+   Inventory
+   ============================================ */
+.inv-missing-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--stone-100);
+}
+
+.inv-missing-item:last-child {
+  border-bottom: none;
+}
+
+.inv-missing-name {
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--stone-700);
+}
+
+.inv-missing-count {
+  font-size: 0.78rem;
+  color: var(--stone-400);
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.inv-inline-input {
+  width: 80px;
+  padding: 0.3rem 0.5rem;
+  border: 1.5px solid var(--stone-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-family: inherit;
+  text-align: center;
+  direction: ltr;
+  background: var(--stone-50);
+  transition: var(--transition);
+}
+
+.inv-inline-input:focus {
+  outline: none;
+  border-color: var(--gold-500);
+  background: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.stock-low {
+  background: #fef9c3 !important;
+}
+
+.stock-out {
+  background: var(--red-50) !important;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.stock-badge-ok {
+  background: var(--green-50);
+  color: var(--green-600);
+}
+
+.stock-badge-low {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.stock-badge-out {
+  background: var(--red-50);
+  color: var(--red-600);
+}
+
 .design-result-image img {
   max-width: 100%;
   max-height: 400px;

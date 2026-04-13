@@ -24,6 +24,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
     if (page === 'tasks') loadTasks();
     if (page === 'sales') loadSalesPage();
     if (page === 'listing') initListingPage();
+    if (page === 'inventory') loadInventoryPage();
     if (page === 'pod') loadPodPage();
     if (page === 'settings') loadSettings();
   });
@@ -1636,6 +1637,128 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
     btn.disabled = false;
     loadingDiv.style.display = 'none';
   }
+});
+
+// ---- Inventory ----
+async function loadInventoryPage() {
+  await Promise.all([loadProducts(), loadMissingSkus()]);
+}
+
+async function loadProducts() {
+  const products = await api('/api/products');
+  if (!Array.isArray(products)) return;
+
+  const physical = products.filter(p => p.type === 'physical');
+  const pod = products.filter(p => p.type === 'pod');
+
+  renderPhysicalProducts(physical);
+  renderPodProducts(pod);
+}
+
+function renderPhysicalProducts(products) {
+  const tbody = document.getElementById('inv-physical-body');
+  if (!products.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="padding:1.5rem;">אין מוצרים פיזיים</td></tr>';
+    return;
+  }
+  tbody.innerHTML = products.map(p => {
+    const stockClass = p.quantity === 0 ? 'stock-out' : p.quantity < 5 ? 'stock-low' : '';
+    const badgeClass = p.quantity === 0 ? 'stock-badge-out' : p.quantity < 5 ? 'stock-badge-low' : 'stock-badge-ok';
+    const badgeText = p.quantity === 0 ? 'אזל' : p.quantity < 5 ? 'נמוך' : 'תקין';
+    return `<tr class="${stockClass}">
+      <td>${escapeHtml(p.sku)}</td>
+      <td class="diamond-item-name">${escapeHtml(p.name)}</td>
+      <td><input class="inv-inline-input" type="number" step="0.01" value="${p.cost || 0}" data-id="${p.id}" data-field="cost" onchange="updateProduct(this)"></td>
+      <td><input class="inv-inline-input" type="number" step="0.01" value="${p.shipping_cost || 0}" data-id="${p.id}" data-field="shipping_cost" onchange="updateProduct(this)"></td>
+      <td>
+        <input class="inv-inline-input" type="number" value="${p.quantity || 0}" data-id="${p.id}" data-field="quantity" onchange="updateProduct(this)" style="width:60px;">
+        <span class="stock-badge ${badgeClass}">${badgeText}</span>
+      </td>
+      <td>
+        ${!p.quantity_snapshot_at ? `<button class="btn-small" onclick="setSnapshot('${p.id}')">הגדר כמות ראשונית</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPodProducts(products) {
+  const tbody = document.getElementById('inv-pod-body');
+  if (!products.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state" style="padding:1.5rem;">אין מוצרי POD</td></tr>';
+    return;
+  }
+  tbody.innerHTML = products.map(p => `<tr>
+    <td>${escapeHtml(p.sku)}</td>
+    <td class="diamond-item-name">${escapeHtml(p.name)}</td>
+    <td>${p.printify_cost ? '$' + Number(p.printify_cost).toFixed(2) : '-'}</td>
+    <td>${p.printify_shipping_cost ? '$' + Number(p.printify_shipping_cost).toFixed(2) : '-'}</td>
+  </tr>`).join('');
+}
+
+async function loadMissingSkus() {
+  const missing = await api('/api/products/missing-skus');
+  const section = document.getElementById('inv-missing-section');
+  const list = document.getElementById('inv-missing-list');
+
+  if (!Array.isArray(missing) || missing.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  list.innerHTML = missing.map(m => `
+    <div class="inv-missing-item">
+      <span class="inv-missing-name">${escapeHtml(m.name)}</span>
+      <span class="inv-missing-count">${m.count} יח'</span>
+      <button class="btn-small" onclick="generateSkuFor('${escapeHtml(m.name).replace(/'/g, "\\'")}')">צור מק"ט</button>
+    </div>
+  `).join('');
+}
+
+window.updateProduct = async function(el) {
+  const id = el.dataset.id;
+  const field = el.dataset.field;
+  const value = field === 'quantity' ? parseInt(el.value, 10) : parseFloat(el.value);
+  await api('/api/products/' + id, { method: 'PATCH', body: { [field]: value } });
+};
+
+window.setSnapshot = async function(id) {
+  await api('/api/products/' + id, { method: 'PATCH', body: { quantity_snapshot_at: new Date().toISOString() } });
+  loadProducts();
+};
+
+window.generateSkuFor = async function(name) {
+  const result = await api('/api/products/generate-sku', { method: 'POST', body: { name } });
+  if (result.sku) {
+    await api('/api/products', {
+      method: 'POST',
+      body: { sku: result.sku, name, type: 'physical' },
+    });
+    loadInventoryPage();
+  }
+};
+
+document.getElementById('btn-sync-products').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-sync-products');
+  btn.disabled = true;
+  btn.textContent = 'מסנכרן...';
+  const result = await api('/api/products/sync-from-sales', { method: 'POST' });
+  btn.textContent = 'סנכרן מוצרים מהמכירות';
+  btn.disabled = false;
+  if (result.error) { alert('שגיאה: ' + result.error); return; }
+  alert(`סונכרנו ${result.created} מוצרים חדשים. ${result.skipped} דולגו.`);
+  loadInventoryPage();
+});
+
+document.getElementById('btn-apply-sales').addEventListener('click', async () => {
+  const month = prompt('הזן חודש (YYYY-MM):');
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) return;
+  const btn = document.getElementById('btn-apply-sales');
+  btn.disabled = true;
+  const result = await api('/api/products/apply-sales/' + month, { method: 'POST' });
+  btn.disabled = false;
+  if (result.error) { alert('שגיאה: ' + result.error); return; }
+  alert(`עודכנו ${result.updated} מוצרים. ${result.skipped} דולגו.`);
+  loadProducts();
 });
 
 // ---- Design Generator ----
