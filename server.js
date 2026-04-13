@@ -693,14 +693,14 @@ OUTPUT JSON ONLY — no markdown:
     const variantsRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}/print_providers/${print_provider_id}/variants.json`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    let placeholderPosition = 'front';
+    let placeholderPositions = ['front'];
     if (variantsRes.ok) {
       const variantsData = await variantsRes.json();
       if (variantsData.placeholders && variantsData.placeholders.length > 0) {
-        placeholderPosition = variantsData.placeholders[0].position;
+        placeholderPositions = variantsData.placeholders.map(p => p.position);
       }
     }
-    console.log(`[Printify] Using placeholder position: ${placeholderPosition}`);
+    console.log(`[Printify] Using placeholder positions: ${placeholderPositions.join(', ')}`);
 
     // Fetch US shipping cost
     let usShippingCost = 0;
@@ -747,7 +747,7 @@ OUTPUT JSON ONLY — no markdown:
         blueprint_id,
         print_provider_id,
         variants: pricedVariants,
-        print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: [{ position: placeholderPosition, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] }] }]
+        print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
       })
     });
     if (!response.ok) {
