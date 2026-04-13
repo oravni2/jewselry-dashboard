@@ -1545,6 +1545,10 @@ textarea.listing-output-field {
   cursor: pointer;
   text-align: center;
   transition: var(--transition);
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pod-blueprint-card:hover {
@@ -1567,13 +1571,14 @@ textarea.listing-output-field {
 }
 
 .pod-blueprint-name {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--stone-700);
   line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .pod-results-list {

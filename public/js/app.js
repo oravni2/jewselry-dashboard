@@ -1480,7 +1480,7 @@ async function loadPodPage() {
 
   grid.innerHTML = podProducts.map(p => `
     <div class="pod-blueprint-card" data-bp-id="${p.blueprint_id}" onclick="togglePodBlueprint(${p.blueprint_id})">
-      <div class="pod-blueprint-name" title="${escapeHtml(p.title)}">${escapeHtml(p.title)}</div>
+      <div class="pod-blueprint-name">${escapeHtml(p.title)}</div>
     </div>
   `).join('');
 }
