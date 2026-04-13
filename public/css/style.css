@@ -1541,7 +1541,7 @@ textarea.listing-output-field {
 .pod-blueprint-card {
   border: 2px solid var(--stone-200);
   border-radius: var(--radius-md);
-  padding: 0.75rem;
+  padding: 0.6rem;
   cursor: pointer;
   text-align: center;
   transition: var(--transition);
@@ -1549,6 +1549,8 @@ textarea.listing-output-field {
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: normal;
+  font-size: 0.8rem;
 }
 
 .pod-blueprint-card:hover {
