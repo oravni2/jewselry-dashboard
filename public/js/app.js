@@ -65,7 +65,7 @@ function renderTasks(tasks) {
       <div class="task-card ${isDone ? 'done' : ''}" data-id="${task.id}">
         <button class="task-check" onclick="toggleTask('${task.id}', '${task.status}')" title="${isDone ? 'סמן כפתוח' : 'סמן כהושלם'}"></button>
         ${catDot}
-        <div class="task-body" style="cursor:pointer;" onclick="openTaskDetail('${task.id}')"
+        <div class="task-body" style="cursor:pointer;" onclick="openTaskDetail('${task.id}')">
           <div class="task-title">${escapeHtml(task.title)}</div>
           <div class="task-meta">
             ${task.description ? `<span>${escapeHtml(task.description.length > 60 ? task.description.slice(0, 60) + '...' : task.description)}</span>` : ''}
