@@ -1720,6 +1720,125 @@ textarea.listing-output-field {
 }
 
 /* ============================================
+   FAB Quick Task
+   ============================================ */
+#fab-new-task {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--gold-600);
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+
+#fab-new-task:hover { transform: scale(1.08); }
+
+#fab-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+#fab-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+#fab-modal-content {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.2s ease;
+}
+
+#fab-modal-content h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--stone-900);
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--stone-200);
+}
+
+#fab-modal-content input,
+#fab-modal-content textarea,
+#fab-modal-content select {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid var(--stone-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--stone-50);
+  margin-bottom: 0.75rem;
+  direction: rtl;
+  transition: var(--transition);
+}
+
+#fab-modal-content input:focus,
+#fab-modal-content textarea:focus {
+  outline: none;
+  border-color: var(--gold-500);
+  background: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.fab-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.fab-modal-footer select {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.fab-modal-footer div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fab-toast {
+  position: fixed;
+  bottom: 5rem;
+  left: 1.5rem;
+  background: var(--gold-600);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  z-index: 1002;
+  animation: slideUp 0.2s ease;
+}
+
+/* ============================================
    Animations
    ============================================ */
 @keyframes spin {

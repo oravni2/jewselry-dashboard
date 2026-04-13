@@ -1844,6 +1844,47 @@ document.getElementById('btn-dalle-generate').addEventListener('click', async ()
   finally { btn.disabled = false; loading.style.display = 'none'; }
 });
 
+// ---- FAB Quick Task ----
+document.getElementById('fab-new-task').addEventListener('click', () => {
+  document.getElementById('fab-modal').style.display = 'flex';
+  document.getElementById('fab-task-title').value = '';
+  document.getElementById('fab-task-notes').value = '';
+  document.getElementById('fab-task-assignee').value = 'david';
+  setTimeout(() => document.getElementById('fab-task-title').focus(), 100);
+});
+
+document.getElementById('fab-modal-overlay').addEventListener('click', () => {
+  document.getElementById('fab-modal').style.display = 'none';
+});
+
+document.getElementById('fab-modal-cancel').addEventListener('click', () => {
+  document.getElementById('fab-modal').style.display = 'none';
+});
+
+document.getElementById('fab-modal-save').addEventListener('click', async () => {
+  const title = document.getElementById('fab-task-title').value.trim();
+  if (!title) return alert('יש להזין כותרת');
+  const description = document.getElementById('fab-task-notes').value.trim() || null;
+  const assigned_to = document.getElementById('fab-task-assignee').value;
+  const btn = document.getElementById('fab-modal-save');
+  btn.disabled = true;
+
+  await api('/api/tasks', { method: 'POST', body: { title, description, assigned_to } });
+
+  document.getElementById('fab-modal').style.display = 'none';
+  btn.disabled = false;
+
+  // Toast
+  const toast = document.createElement('div');
+  toast.className = 'fab-toast';
+  toast.textContent = 'נשמר ✓';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+
+  // Reload tasks if on tasks page
+  if (document.getElementById('page-tasks').classList.contains('active')) loadTasks();
+});
+
 // ---- Util ----
 function escapeHtml(str) {
   const div = document.createElement('div');
