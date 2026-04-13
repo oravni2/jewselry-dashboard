@@ -471,10 +471,11 @@ let parsedCsvRows = [];
 // Sales tab switching
 document.querySelectorAll('.sales-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.sales-tab').forEach(t => t.classList.remove('active'));
+    tab.closest('main').querySelectorAll('.sales-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    document.querySelectorAll('.sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+    tab.closest('main').querySelectorAll('.sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
     const target = document.getElementById(tab.dataset.salesTab);
+    if (!target) return;
     target.classList.add('active');
     target.style.display = 'block';
 
@@ -1504,8 +1505,9 @@ document.querySelectorAll('[data-pod-tab]').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('[data-pod-tab]').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    document.querySelectorAll('#page-pod .sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+    tab.closest('main').querySelectorAll('.sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
     const target = document.getElementById(tab.dataset.podTab);
+    if (!target) return;
     target.classList.add('active');
     target.style.display = 'block';
   });
