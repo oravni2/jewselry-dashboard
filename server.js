@@ -54,12 +54,12 @@ app.get('/api/tasks', async (req, res) => {
 });
 
 app.post('/api/tasks', async (req, res) => {
-  const { title, description, due_date, category_id, assigned_to } = req.body;
+  const { title, description, due_date, category_id, assigned_to, priority } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
   const { data, error } = await supabase
     .from('tasks')
-    .insert({ title, description, due_date: due_date || null, category_id: category_id || null, assigned_to: assigned_to || 'david' })
+    .insert({ title, description, due_date: due_date || null, category_id: category_id || null, assigned_to: assigned_to || 'david', priority: priority || 'normal' })
     .select('*, categories(name, color)')
     .single();
 
@@ -80,6 +80,27 @@ app.patch('/api/tasks/:id', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+app.post('/api/tasks/:id/ai-category', async (req, res) => {
+  const { title } = req.body;
+  if (!title) return res.status(400).json({ error: 'Title is required' });
+
+  // Fetch existing categories
+  const { data: cats } = await supabase.from('categories').select('name').order('name');
+  const catNames = (cats || []).map(c => c.name).join(', ');
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 50,
+      system: `You categorize tasks for a Jewish jewelry business. Existing categories: ${catNames || 'none'}. Return ONLY the category name, nothing else. If no existing category fits, suggest a new short Hebrew category name.`,
+      messages: [{ role: 'user', content: `Task: "${title}"` }]
+    });
+    res.json({ category: msg.content[0].text.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ---- CATEGORIES API ----

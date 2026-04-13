@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   due_date date,
   category_id uuid REFERENCES categories(id) ON DELETE SET NULL,
   assigned_to text NOT NULL DEFAULT 'david' CHECK (assigned_to IN ('david', 'or')),
-  status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'done')),
+  status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'done')),
+  priority text DEFAULT 'normal' CHECK (priority IN ('urgent', 'high', 'normal', 'low')),
   created_at timestamptz DEFAULT now()
 );
 
