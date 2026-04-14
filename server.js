@@ -630,6 +630,38 @@ app.post('/api/printify/create-product', async (req, res) => {
         const mediaType = image_base64.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
         console.log(`[Printify] Image size for AI: ${(base64Data.length / 1024).toFixed(0)}KB`);
 
+        // Fetch variants to extract available sizes grouped by orientation
+        let availableSizes = '';
+        try {
+          const sizesRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}/print_providers/${print_provider_id}/variants.json`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (sizesRes.ok) {
+            const sizesData = await sizesRes.json();
+            const groups = { Vertical: new Set(), Horizontal: new Set(), Square: new Set(), Other: new Set() };
+            (sizesData.variants || []).forEach(v => {
+              const t = (v.title || '').toLowerCase();
+              // Extract size pattern like 12" x 18" or 12x18
+              const sizeMatch = (v.title || '').match(/(\d+["″]?\s*[x×]\s*\d+["″]?)/i);
+              const size = sizeMatch ? sizeMatch[1] : null;
+              if (!size) return;
+              if (t.includes('vertical')) groups.Vertical.add(size);
+              else if (t.includes('horizontal')) groups.Horizontal.add(size);
+              else if (t.includes('square')) groups.Square.add(size);
+              else groups.Other.add(size);
+            });
+            const lines = [];
+            if (groups.Vertical.size > 0) lines.push('Vertical: ' + [...groups.Vertical].join(', '));
+            if (groups.Horizontal.size > 0) lines.push('Horizontal: ' + [...groups.Horizontal].join(', '));
+            if (groups.Square.size > 0) lines.push('Square: ' + [...groups.Square].join(', '));
+            if (groups.Other.size > 0 && lines.length === 0) lines.push('Sizes: ' + [...groups.Other].join(', '));
+            if (lines.length > 0) availableSizes = '\n📐 Available Sizes:\n' + lines.join('\n');
+            console.log('[Printify] Available sizes for description:', availableSizes || '(none detected)');
+          }
+        } catch (e) {
+          console.error('[Printify] Failed to fetch variant sizes:', e.message);
+        }
+
         const systemPrompt = `You are an expert Etsy SEO specialist for Jewish and Israeli art and Judaica products.
 You are creating a listing for a print-on-demand product.
 
@@ -647,7 +679,8 @@ TITLE RULES:
 - No punctuation except spaces
 - If under 125 chars: add more keywords from the bank until you reach 125+
 - Example of correct length title (132 chars): 'Jewish Art Canvas Print Kotel Western Wall Jerusalem Painting Judaica Wall Art Gift Hanukkah Decor Israel Home Blessing Hebrew Art'
-DESCRIPTION: SEO layer → Key Features (✦ bullets, include product technical specs) → Processing 3-10 days → Care Instructions → "Discover more at https://jewselry.etsy.com. Follow @jewselry_world"
+DESCRIPTION: SEO layer → Key Features (✦ bullets, include product technical specs) → Available Sizes section (see below) → Processing 3-10 days → Care Instructions → "Discover more at https://jewselry.etsy.com. Follow @jewselry_world"
+${availableSizes ? `\nAVAILABLE SIZES TO INCLUDE IN DESCRIPTION:\n${availableSizes}` : ''}
 TAGS: exactly 13 tags, each tag MUST be 20 characters or less including spaces. Count each tag's characters carefully. Tags longer than 20 characters will be rejected. From title keywords, prefer high-volume from keyword bank.
 
 KEYWORD BANK (top keywords by volume):
