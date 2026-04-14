@@ -648,7 +648,7 @@ TITLE RULES:
 - If under 125 chars: add more keywords from the bank until you reach 125+
 - Example of correct length title (132 chars): 'Jewish Art Canvas Print Kotel Western Wall Jerusalem Painting Judaica Wall Art Gift Hanukkah Decor Israel Home Blessing Hebrew Art'
 DESCRIPTION: SEO layer → Key Features (✦ bullets, include product technical specs) → Processing 3-10 days → Care Instructions → "Discover more at https://jewselry.etsy.com. Follow @jewselry_world"
-TAGS: exactly 13, max 20 chars, from title keywords, prefer high-volume from keyword bank.
+TAGS: exactly 13 tags, each tag MUST be 20 characters or less including spaces. Count each tag's characters carefully. Tags longer than 20 characters will be rejected. From title keywords, prefer high-volume from keyword bank.
 
 KEYWORD BANK (top keywords by volume):
 ${keywordList}
@@ -777,8 +777,13 @@ OUTPUT JSON ONLY — no markdown:
     console.log(`[Printify] Cheapest variant cost: ${cheapestCost} cents, price: ${Math.ceil((cheapestCost * 2) / 100) * 100} cents`);
 
     const tagsArray = generatedTags
-      ? generatedTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 13)
+      ? generatedTags.split(',').map(t => t.trim()).filter(t => t.length > 0 && t.length <= 20).slice(0, 13)
       : [];
+    const allTags = generatedTags ? generatedTags.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const removedTags = allTags.filter(t => t.length > 20);
+    if (removedTags.length > 0) {
+      console.log('[Printify] Tags removed (>20 chars):', removedTags);
+    }
     console.log('[Printify] Tags array:', tagsArray);
     console.log('[Printify] Filtered variants count:', filteredVariants.length, 'titles:', filteredVariants.slice(0, 3).map(v => v.title));
 
