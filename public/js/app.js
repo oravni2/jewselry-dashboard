@@ -1590,10 +1590,18 @@ function handlePodImage(file) {
 
 // Compress image client-side if too large (>4MB in base64 = ~5.3M chars)
 async function compressImageIfNeeded(base64) {
-  if (base64.length <= 5333333) return base64;
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
+      // Detect orientation
+      let orientation = 'square';
+      if (img.width > img.height * 1.1) orientation = 'horizontal';
+      else if (img.height > img.width * 1.1) orientation = 'vertical';
+
+      if (base64.length <= 5333333) {
+        resolve({ data: base64, orientation });
+        return;
+      }
       const canvas = document.createElement('canvas');
       let w = img.width, h = img.height;
       const maxDim = 1500;
@@ -1605,7 +1613,7 @@ async function compressImageIfNeeded(base64) {
       canvas.width = w;
       canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', 0.85));
+      resolve({ data: canvas.toDataURL('image/jpeg', 0.85), orientation });
     };
     img.src = base64;
   });
@@ -1630,7 +1638,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
 
   try {
     // Step 1: Compress and upload image to Printify
-    const compressedImage = await compressImageIfNeeded(podImageBase64);
+    const { data: compressedImage, orientation: imageOrientation } = await compressImageIfNeeded(podImageBase64);
     const uploadRes = await api('/api/printify/upload-image', {
       method: 'POST',
       body: { image: compressedImage, filename: 'design.png' },
@@ -1666,6 +1674,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
           image_id: imageId,
           generate_content: generateContent,
           image_base64: generateContent ? compressedImage : undefined,
+          orientation: imageOrientation,
         },
       });
 

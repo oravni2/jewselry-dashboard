@@ -598,7 +598,7 @@ app.post('/api/printify/upload-image', async (req, res) => {
 
 app.post('/api/printify/create-product', async (req, res) => {
   try {
-  const { title, description, blueprint_id, print_provider_id, variants, image_id, generate_content, image_base64 } = req.body;
+  const { title, description, blueprint_id, print_provider_id, variants, image_id, generate_content, image_base64, orientation } = req.body;
   const token = await getPrintifyToken();
   const shopId = process.env.PRINTIFY_SHOP_ID;
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
@@ -694,6 +694,21 @@ OUTPUT JSON ONLY — no markdown:
     }
     console.log(`[Printify] Using placeholder positions: ${placeholderPositions.join(', ')}`);
 
+    // Filter variants by orientation if provided
+    let filteredVariants = variants;
+    if (orientation && variants.length > 0) {
+      const orientKey = orientation.toLowerCase();
+      if (['horizontal', 'vertical', 'square'].includes(orientKey)) {
+        const matched = variants.filter(v => v.title && v.title.toLowerCase().includes(orientKey));
+        if (matched.length > 0) {
+          filteredVariants = matched;
+          console.log(`[Printify] Filtered ${variants.length} variants to ${matched.length} (${orientKey})`);
+        } else {
+          console.log(`[Printify] No variants matched orientation "${orientKey}", using all ${variants.length}`);
+        }
+      }
+    }
+
     // Fetch US shipping cost
     let usShippingCost = 0;
     try {
@@ -717,7 +732,7 @@ OUTPUT JSON ONLY — no markdown:
     // Calculate prices: cost + shipping, multiply by 3, round up to nearest dollar
     // Cheapest variant gets x2 multiplier instead of x3
     let cheapestCost = Infinity;
-    const variantCosts = variants.map(v => {
+    const variantCosts = filteredVariants.map(v => {
       const cost = (v.cost || 0) + usShippingCost;
       if (cost < cheapestCost) cheapestCost = cost;
       return { ...v, _totalCost: cost };
@@ -739,7 +754,7 @@ OUTPUT JSON ONLY — no markdown:
         blueprint_id,
         print_provider_id,
         variants: pricedVariants,
-        print_areas: [{ variant_ids: variants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
+        print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
       })
     });
     if (!response.ok) {
