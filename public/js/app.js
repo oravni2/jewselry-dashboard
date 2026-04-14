@@ -1660,7 +1660,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
       }
 
       // Use ALL enabled variants
-      const variants = variantsData.variants.map(v => ({ id: v.id, price: 0, is_enabled: true }));
+      const variants = variantsData.variants.map(v => ({ id: v.id, title: v.title, price: 0, is_enabled: true }));
 
       // Create product
       const createRes = await api('/api/printify/create-product', {
