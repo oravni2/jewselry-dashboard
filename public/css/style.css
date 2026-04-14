@@ -149,9 +149,9 @@ body {
    ============================================ */
 .page {
   display: none;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
+  padding: 2rem 2.5rem 3rem;
 }
 
 .page.active {
