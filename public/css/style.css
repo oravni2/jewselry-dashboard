@@ -1565,7 +1565,18 @@ textarea.listing-output-field {
    POD Module
    ============================================ */
 .pod-wizard {
-  max-width: 700px;
+}
+
+.pod-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .pod-layout {
+    grid-template-columns: 40% 1fr;
+  }
 }
 
 .pod-step {
@@ -1608,7 +1619,7 @@ textarea.listing-output-field {
 
 .pod-blueprints-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 0.75rem;
 }
 

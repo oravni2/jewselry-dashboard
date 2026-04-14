@@ -670,53 +670,59 @@
     <!-- Products Tab -->
     <div id="pod-products-tab" class="sales-tab-content active">
     <div class="pod-wizard">
-      <!-- Step 1: Upload Design -->
-      <div class="card pod-step" id="pod-step-1">
-        <div class="pod-step-header">
-          <span class="pod-step-num">1</span>
-          <h3>העלאת עיצוב</h3>
-        </div>
-        <div class="listing-image-drop" id="pod-drop-zone">
-          <input type="file" id="pod-image-input" accept="image/*" class="file-input-hidden">
-          <div id="pod-image-preview" style="display:none;">
-            <img id="pod-preview-img" alt="">
+      <div class="pod-layout">
+        <div class="pod-left">
+          <!-- Step 1: Upload Design -->
+          <div class="card pod-step" id="pod-step-1">
+            <div class="pod-step-header">
+              <span class="pod-step-num">1</span>
+              <h3>העלאת עיצוב</h3>
+            </div>
+            <div class="listing-image-drop" id="pod-drop-zone">
+              <input type="file" id="pod-image-input" accept="image/*" class="file-input-hidden">
+              <div id="pod-image-preview" style="display:none;">
+                <img id="pod-preview-img" alt="">
+              </div>
+              <div id="pod-image-placeholder">
+                <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+                <span class="file-drop-text">לחץ או גרור עיצוב לכאן</span>
+              </div>
+            </div>
           </div>
-          <div id="pod-image-placeholder">
-            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-            <span class="file-drop-text">לחץ או גרור עיצוב לכאן</span>
+          <!-- Step 3: Product Details -->
+          <div class="card pod-step" id="pod-step-3">
+            <div class="pod-step-header">
+              <span class="pod-step-num">2</span>
+              <h3>פרטי המוצר</h3>
+            </div>
+            <div class="form-group">
+              <label for="pod-title">כותרת</label>
+              <input type="text" id="pod-title" placeholder="שם המוצר...">
+            </div>
+            <div class="form-group">
+              <label for="pod-description">תיאור</label>
+              <textarea id="pod-description" rows="4" placeholder="תיאור המוצר..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-generate" id="btn-create-pod">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
+              צור מוצרים בפרינטיפיי
+            </button>
+          </div>
+        </div>
+        <div class="pod-right">
+          <!-- Step 2: Select Products -->
+          <div class="card pod-step" id="pod-step-2">
+            <div class="pod-step-header">
+              <span class="pod-step-num">3</span>
+              <h3>בחירת מוצרים</h3>
+            </div>
+            <div id="pod-blueprints-grid" class="pod-blueprints-grid">
+              <div class="loading"><span class="spinner"></span>טוען מוצרים...</div>
+            </div>
           </div>
         </div>
       </div>
-      <!-- Step 2: Select Products -->
-      <div class="card pod-step" id="pod-step-2">
-        <div class="pod-step-header">
-          <span class="pod-step-num">2</span>
-          <h3>בחירת מוצרים</h3>
-        </div>
-        <div id="pod-blueprints-grid" class="pod-blueprints-grid">
-          <div class="loading"><span class="spinner"></span>טוען מוצרים...</div>
-        </div>
-      </div>
-      <!-- Step 3: Product Details -->
-      <div class="card pod-step" id="pod-step-3">
-        <div class="pod-step-header">
-          <span class="pod-step-num">3</span>
-          <h3>פרטי המוצר</h3>
-        </div>
-        <div class="form-group">
-          <label for="pod-title">כותרת</label>
-          <input type="text" id="pod-title" placeholder="שם המוצר...">
-        </div>
-        <div class="form-group">
-          <label for="pod-description">תיאור</label>
-          <textarea id="pod-description" rows="4" placeholder="תיאור המוצר..."></textarea>
-        </div>
-        <button class="btn btn-primary btn-generate" id="btn-create-pod">
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
-          צור מוצרים בפרינטיפיי
-        </button>
-      </div>
-      <!-- Loading & Results -->
+      <!-- Loading & Results (full width) -->
       <div id="pod-loading" class="loading" style="display:none;"><span class="spinner"></span>יוצר מוצרים...</div>
       <div id="pod-results" class="card pod-step" style="display:none;">
         <div class="pod-step-header">
