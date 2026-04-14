@@ -829,6 +829,19 @@ OUTPUT JSON ONLY — no markdown:
       return res.status(response.status).json({ error: errData.message || errData.errors || errText || 'Printify create failed' });
     }
     const data = await response.json();
+
+    // Verify saved product
+    try {
+      const verifyRes = await fetch(`https://api.printify.com/v1/shops/${shopId}/products/${data.id}.json`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (verifyRes.ok) {
+        const verifyData = await verifyRes.json();
+        console.log('[Printify] Saved product tags:', verifyData.tags);
+        console.log('[Printify] Saved product title:', verifyData.title);
+      }
+    } catch (e) {}
+
     res.json({
       ...data,
       editor_url: `https://printify.com/app/store/${shopId}/products/${data.id}`,
