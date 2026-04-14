@@ -598,7 +598,7 @@ app.post('/api/printify/upload-image', async (req, res) => {
 
 app.post('/api/printify/create-product', async (req, res) => {
   try {
-  const { title, description, blueprint_id, print_provider_id, variants, image_id, generate_content, image_base64, orientation } = req.body;
+  let { title, description, blueprint_id, print_provider_id, variants, image_id, generate_content, image_base64, orientation } = req.body;
   const token = await getPrintifyToken();
   const shopId = process.env.PRINTIFY_SHOP_ID;
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
@@ -653,8 +653,14 @@ TAGS: exactly 13 tags, each tag MUST be 20 characters or less including spaces. 
 KEYWORD BANK (top keywords by volume):
 ${keywordList}
 
+ORIENTATION DETECTION:
+Look at the image dimensions and determine:
+- If width is more than 10% greater than height: "horizontal"
+- If height is more than 10% greater than width: "vertical"
+- Otherwise: "square"
+
 OUTPUT JSON ONLY — no markdown:
-{"title":"...","description":"...","tags":"...","warning":null}`;
+{"title":"...","description":"...","tags":"...","orientation":"square","warning":null}`;
 
         const aiMsg = await anthropic.messages.create({
           model: 'claude-sonnet-4-6',
@@ -678,6 +684,10 @@ OUTPUT JSON ONLY — no markdown:
           finalDescription = parsed.description || finalDescription;
           generatedTags = parsed.tags || null;
           generatedWarning = parsed.warning || null;
+          if (parsed.orientation) {
+            orientation = parsed.orientation;
+            console.log('[Printify] AI detected orientation:', orientation);
+          }
           if (!parsed.title) console.warn('[Printify] AI returned empty title. Raw response:', aiText.slice(0, 500));
         } else {
           console.error('[Printify] AI response had no JSON. Raw response:', aiText.slice(0, 500));
