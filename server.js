@@ -755,18 +755,29 @@ OUTPUT JSON ONLY — no markdown:
     console.log('[Printify] Tags array:', tagsArray);
     console.log('[Printify] Filtered variants count:', filteredVariants.length, 'titles:', filteredVariants.slice(0, 3).map(v => v.title));
 
+    const productBody = {
+      title: finalTitle,
+      description: finalDescription,
+      blueprint_id,
+      print_provider_id,
+      variants: pricedVariants,
+      tags: tagsArray,
+      print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
+    };
+    console.log('[Printify] Product body being sent:', JSON.stringify({
+      title: productBody.title,
+      title_length: productBody.title?.length,
+      tags: productBody.tags,
+      tags_count: productBody.tags?.length,
+      variants_count: productBody.variants?.length,
+      blueprint_id: productBody.blueprint_id,
+      print_provider_id: productBody.print_provider_id,
+    }));
+
     const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: finalTitle,
-        description: finalDescription,
-        blueprint_id,
-        print_provider_id,
-        variants: pricedVariants,
-        tags: tagsArray,
-        print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
-      })
+      body: JSON.stringify(productBody)
     });
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
