@@ -695,6 +695,7 @@ OUTPUT JSON ONLY — no markdown:
     console.log(`[Printify] Using placeholder positions: ${placeholderPositions.join(', ')}`);
 
     // Filter variants by orientation if provided
+    console.log('[Printify] Orientation received:', orientation);
     let filteredVariants = variants;
     if (orientation && variants.length > 0) {
       const orientKey = orientation.toLowerCase();
@@ -748,6 +749,8 @@ OUTPUT JSON ONLY — no markdown:
     const tagsArray = generatedTags
       ? generatedTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 13)
       : [];
+    console.log('[Printify] Tags array:', tagsArray);
+    console.log('[Printify] Filtered variants count:', filteredVariants.length, 'titles:', filteredVariants.slice(0, 3).map(v => v.title));
 
     const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
       method: 'POST',
