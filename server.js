@@ -781,7 +781,7 @@ OUTPUT JSON ONLY — no markdown:
       print_provider_id,
       variants: placeholderVariants,
       tags: tagsArray,
-      print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
+      print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1.15, angle: 0 }] })) }]
     };
 
     // Add print_details for canvas products
