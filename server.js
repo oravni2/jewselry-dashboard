@@ -638,7 +638,15 @@ PRODUCT TECHNICAL DETAILS: ${bpData.description || 'N/A'}
 
 Analyze the design image and create an optimized Etsy listing.
 
-TITLE LENGTH IS CRITICAL: minimum 125 characters, maximum 140 characters. Count the characters carefully before outputting. If the title is under 125 characters, add more long-tail keywords from the keyword bank to reach minimum length. Do not stop at 100 characters — this is wrong. Target 130-140 characters. Format: keyword chaining, no punctuation, first words = product noun, include gift terms.
+TITLE RULES:
+- Minimum 125 characters, maximum 140 characters
+- You MUST count characters before finalizing
+- Use keyword chaining — every 3-4 word window is a searchable phrase
+- First words = product type (e.g. 'Jewish Art Canvas Print', 'Judaica Wall Art Poster')
+- Include: material/style, theme, occasion/gift angle
+- No punctuation except spaces
+- If under 125 chars: add more keywords from the bank until you reach 125+
+- Example of correct length title (132 chars): 'Jewish Art Canvas Print Kotel Western Wall Jerusalem Painting Judaica Wall Art Gift Hanukkah Decor Israel Home Blessing Hebrew Art'
 DESCRIPTION: SEO layer → Key Features (✦ bullets, include product technical specs) → Processing 3-10 days → Care Instructions → "Discover more at https://jewselry.etsy.com. Follow @jewselry_world"
 TAGS: exactly 13, max 20 chars, from title keywords, prefer high-volume from keyword bank.
 
@@ -676,7 +684,26 @@ OUTPUT JSON ONLY — no markdown:
         }
         console.log(`[Printify] AI generated title: "${finalTitle}"`);
         console.log('[Printify] Parsed title length:', finalTitle?.length);
-        console.log('[Printify] Parsed tags:', generatedTags);
+        console.log('[Printify] Raw tags string:', generatedTags);
+
+        // Enforce minimum title length
+        if (finalTitle && finalTitle.length < 115) {
+          console.log(`[Printify] Title too short (${finalTitle.length} chars), requesting extension`);
+          try {
+            const extendMsg = await anthropic.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 256,
+              messages: [{ role: 'user', content: `This Etsy title is too short (${finalTitle.length} chars). Extend it to 125-140 characters by adding relevant Jewish/Judaica/Israel keywords. Keep keyword chaining. Return ONLY the extended title, nothing else.\n\nTitle: ${finalTitle}` }]
+            });
+            const extendedTitle = extendMsg.content[0].text.trim();
+            if (extendedTitle.length >= 115) {
+              console.log(`[Printify] Extended title (${extendedTitle.length} chars): "${extendedTitle}"`);
+              finalTitle = extendedTitle;
+            }
+          } catch (extErr) {
+            console.error('[Printify] Title extension failed:', extErr.message);
+          }
+        }
       } catch (aiErr) {
         console.error('[Printify] AI generation failed, using fallback:', aiErr.message, aiErr.stack);
       }
