@@ -19,7 +19,6 @@ if (fs.existsSync(envPath)) {
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const Anthropic = require('@anthropic-ai/sdk');
-const sharp = require('sharp');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -627,16 +626,9 @@ app.post('/api/printify/create-product', async (req, res) => {
           keywordList = allKw.sort((a, b) => b.volume - a.volume).slice(0, 100).map(k => k.keyword).join(', ');
         }
 
-        // Resize/compress image for Claude vision
-        const rawBase64 = image_base64.replace(/^data:image\/[a-z]+;base64,/, '');
-        const imgBuffer = Buffer.from(rawBase64, 'base64');
-        const resizedBuffer = await sharp(imgBuffer)
-          .resize(2000, 2000, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: 85 })
-          .toBuffer();
-        const base64Data = resizedBuffer.toString('base64');
-        const mediaType = 'image/jpeg';
-        console.log(`[Printify] Image resized: ${(imgBuffer.length / 1024).toFixed(0)}KB → ${(resizedBuffer.length / 1024).toFixed(0)}KB`);
+        const base64Data = image_base64.replace(/^data:image\/[a-z]+;base64,/, '');
+        const mediaType = image_base64.match(/^data:(image\/[a-z]+);/)?.[1] || 'image/jpeg';
+        console.log(`[Printify] Image size for AI: ${(base64Data.length / 1024).toFixed(0)}KB`);
 
         const systemPrompt = `You are an expert Etsy SEO specialist for Jewish and Israeli art and Judaica products.
 You are creating a listing for a print-on-demand product.

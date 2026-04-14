@@ -1588,6 +1588,29 @@ function handlePodImage(file) {
   reader.readAsDataURL(file);
 }
 
+// Compress image client-side if too large (>4MB in base64 = ~5.3M chars)
+async function compressImageIfNeeded(base64) {
+  if (base64.length <= 5333333) return base64;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const maxDim = 1500;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = base64;
+  });
+}
+
 // Create POD products
 document.getElementById('btn-create-pod').addEventListener('click', async () => {
   if (!podImageBase64) return alert('יש להעלות עיצוב');
@@ -1606,10 +1629,11 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
   resultsDiv.style.display = 'none';
 
   try {
-    // Step 1: Upload image to Printify
+    // Step 1: Compress and upload image to Printify
+    const compressedImage = await compressImageIfNeeded(podImageBase64);
     const uploadRes = await api('/api/printify/upload-image', {
       method: 'POST',
-      body: { image: podImageBase64, filename: 'design.png' },
+      body: { image: compressedImage, filename: 'design.png' },
     });
     if (uploadRes.error) { alert('שגיאה בהעלאת תמונה: ' + uploadRes.error); return; }
     const imageId = uploadRes.id;
@@ -1641,7 +1665,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
           variants,
           image_id: imageId,
           generate_content: generateContent,
-          image_base64: generateContent ? podImageBase64 : undefined,
+          image_base64: generateContent ? compressedImage : undefined,
         },
       });
 
