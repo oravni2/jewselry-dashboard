@@ -760,21 +760,8 @@ OUTPUT JSON ONLY — no markdown:
       console.error('[Printify] Failed to fetch shipping:', shipErr.message);
     }
 
-    // Calculate prices: cost + shipping, multiply by 3, round up to nearest dollar
-    // Cheapest variant gets x2 multiplier instead of x3
-    let cheapestCost = Infinity;
-    const variantCosts = filteredVariants.map(v => {
-      const cost = (v.cost || 0) + usShippingCost;
-      if (cost < cheapestCost) cheapestCost = cost;
-      return { ...v, _totalCost: cost };
-    });
-
-    const pricedVariants = variantCosts.map(v => {
-      const multiplier = v._totalCost === cheapestCost ? 2 : 3;
-      const price = Math.ceil((v._totalCost * multiplier) / 100) * 100;
-      return { id: v.id, price: price || 2000, is_enabled: v.is_enabled };
-    });
-    console.log(`[Printify] Cheapest variant cost: ${cheapestCost} cents, price: ${Math.ceil((cheapestCost * 2) / 100) * 100} cents`);
+    // Use placeholder price for initial creation — real pricing applied after
+    const placeholderVariants = filteredVariants.map(v => ({ id: v.id, price: 2000, is_enabled: true }));
 
     const tagsArray = generatedTags
       ? generatedTags.split(',').map(t => t.trim()).filter(t => t.length > 0 && t.length <= 20).slice(0, 13)
@@ -792,7 +779,7 @@ OUTPUT JSON ONLY — no markdown:
       description: finalDescription,
       blueprint_id,
       print_provider_id,
-      variants: pricedVariants,
+      variants: placeholderVariants,
       tags: tagsArray,
       print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
     };
@@ -835,17 +822,49 @@ OUTPUT JSON ONLY — no markdown:
     }
     const data = await response.json();
 
-    // Verify saved product
+    // Fetch created product to get real variant costs and update prices
     try {
-      const verifyRes = await fetch(`https://api.printify.com/v1/shops/${shopId}/products/${data.id}.json`, {
+      const fetchRes = await fetch(`https://api.printify.com/v1/shops/${shopId}/products/${data.id}.json`, {
         headers: { 'Authorization': 'Bearer ' + token }
       });
-      if (verifyRes.ok) {
-        const verifyData = await verifyRes.json();
-        console.log('[Printify] Saved product tags:', verifyData.tags);
-        console.log('[Printify] Saved product title:', verifyData.title);
+      if (fetchRes.ok) {
+        const fetchedProduct = await fetchRes.json();
+        console.log('[Printify] Saved product tags:', fetchedProduct.tags);
+        console.log('[Printify] Saved product title:', fetchedProduct.title);
+
+        // Calculate real prices from Printify variant costs
+        const realVariants = fetchedProduct.variants || [];
+        let cheapestCost = Infinity;
+        realVariants.forEach(v => {
+          const totalCost = (v.cost || 0) + usShippingCost;
+          if (totalCost < cheapestCost) cheapestCost = totalCost;
+        });
+
+        const updatedVariants = realVariants.map(v => {
+          const totalCost = (v.cost || 0) + usShippingCost;
+          const multiplier = totalCost === cheapestCost ? 2 : 3;
+          const price = Math.ceil((totalCost * multiplier) / 100) * 100;
+          return { id: v.id, price: price || 2000, is_enabled: v.is_enabled };
+        });
+
+        console.log('[Printify] Price update - sample:', updatedVariants.slice(0, 3).map(v => ({ id: v.id, cost: realVariants.find(r => r.id === v.id)?.cost, price: v.price })));
+        console.log(`[Printify] Cheapest cost: ${cheapestCost} cents → price: ${Math.ceil((cheapestCost * 2) / 100) * 100} cents`);
+
+        // Update product with real prices
+        const updateRes = await fetch(`https://api.printify.com/v1/shops/${shopId}/products/${data.id}.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variants: updatedVariants })
+        });
+        if (updateRes.ok) {
+          console.log('[Printify] Prices updated successfully');
+        } else {
+          console.error('[Printify] Price update failed:', await updateRes.text().catch(() => ''));
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Printify] Post-create pricing failed:', e.message);
+    }
 
     res.json({
       ...data,
