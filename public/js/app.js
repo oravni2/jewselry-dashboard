@@ -1695,7 +1695,17 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
     const resultsList = document.getElementById('pod-results-list');
     resultsList.innerHTML = results.map(r => {
       if (r.success) {
-        const tagsLine = r.generated_tags ? `<div class="pod-result-tags">טאגים: ${escapeHtml(r.generated_tags)}</div>` : '';
+        const tagsStr = Array.isArray(r.generated_tags) ? r.generated_tags.join(', ') : (r.generated_tags || '');
+        const tagsId = 'pod-tags-' + r.id;
+        const tagsLine = tagsStr ? `
+          <div class="pod-tags-section">
+            <label class="pod-tags-label">טאגים לפרינטיפיי:</label>
+            <div class="pod-tags-copy-row">
+              <input type="text" id="${tagsId}" class="pod-tags-input" value="${escapeHtml(tagsStr)}" readonly>
+              <button class="btn btn-copy pod-tags-copy-btn" onclick="copyPodTags('${tagsId}', this)">העתק הכל</button>
+            </div>
+            <div class="pod-tags-hint">בפרינטיפיי → Tags → הדבק את כל הטאגים בבת אחת</div>
+          </div>` : '';
         return `<div class="pod-result-item">
           <div>
             <span class="pod-result-name">${escapeHtml(r.title)}</span>
@@ -1841,6 +1851,15 @@ document.getElementById('btn-apply-sales').addEventListener('click', async () =>
   alert(`עודכנו ${result.updated} מוצרים. ${result.skipped} דולגו.`);
   loadProducts();
 });
+
+window.copyPodTags = function(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  navigator.clipboard.writeText(input.value).then(() => {
+    btn.textContent = '✓ הועתק';
+    setTimeout(() => { btn.textContent = 'העתק הכל'; }, 2000);
+  });
+};
 
 // ---- Design Generator ----
 let designRefBase64 = null;
