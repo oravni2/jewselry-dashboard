@@ -745,6 +745,10 @@ OUTPUT JSON ONLY — no markdown:
     });
     console.log(`[Printify] Cheapest variant cost: ${cheapestCost} cents, price: ${Math.ceil((cheapestCost * 2) / 100) * 100} cents`);
 
+    const tagsArray = generatedTags
+      ? generatedTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 13)
+      : [];
+
     const response = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -754,6 +758,7 @@ OUTPUT JSON ONLY — no markdown:
         blueprint_id,
         print_provider_id,
         variants: pricedVariants,
+        tags: tagsArray,
         print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
       })
     });
@@ -770,7 +775,7 @@ OUTPUT JSON ONLY — no markdown:
       editor_url: `https://printify.com/app/store/${shopId}/products/${data.id}`,
       generated_title: generate_content ? finalTitle : undefined,
       generated_description: generate_content ? finalDescription : undefined,
-      generated_tags: generatedTags,
+      generated_tags: tagsArray.length > 0 ? tagsArray : generatedTags,
       generated_warning: generatedWarning,
     });
   } catch (err) {
