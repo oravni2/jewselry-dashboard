@@ -791,6 +791,21 @@ OUTPUT JSON ONLY — no markdown:
       tags: tagsArray,
       print_areas: [{ variant_ids: filteredVariants.map(v => v.id), placeholders: placeholderPositions.map(pos => ({ position: pos, images: [{ id: image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] })) }]
     };
+
+    // Add print_details for canvas products
+    try {
+      const bpCheckRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${blueprint_id}.json`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (bpCheckRes.ok) {
+        const bpCheck = await bpCheckRes.json();
+        if (bpCheck.title && bpCheck.title.toLowerCase().includes('canvas')) {
+          productBody.print_details = { print_on_side: 'regular' };
+          console.log('[Printify] Canvas detected, added print_details');
+        }
+      }
+    } catch (e) {}
+
     console.log('[Printify] Product body being sent:', JSON.stringify({
       title: productBody.title,
       title_length: productBody.title?.length,
