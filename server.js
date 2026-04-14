@@ -662,6 +662,7 @@ OUTPUT JSON ONLY — no markdown:
         });
 
         const aiText = aiMsg.content[0].text;
+        console.log('[Printify] Raw AI response:', aiText.slice(0, 1000));
         const jsonMatch = aiText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -674,6 +675,8 @@ OUTPUT JSON ONLY — no markdown:
           console.error('[Printify] AI response had no JSON. Raw response:', aiText.slice(0, 500));
         }
         console.log(`[Printify] AI generated title: "${finalTitle}"`);
+        console.log('[Printify] Parsed title length:', finalTitle?.length);
+        console.log('[Printify] Parsed tags:', generatedTags);
       } catch (aiErr) {
         console.error('[Printify] AI generation failed, using fallback:', aiErr.message, aiErr.stack);
       }
