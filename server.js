@@ -597,12 +597,12 @@ app.post('/api/printify/upload-image', async (req, res) => {
 });
 
 app.post('/api/printify/create-product', async (req, res) => {
+  try {
   const { title, description, blueprint_id, print_provider_id, variants, image_id, generate_content, image_base64 } = req.body;
   const token = await getPrintifyToken();
   const shopId = process.env.PRINTIFY_SHOP_ID;
   if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
   if (!shopId) return res.status(400).json({ error: 'PRINTIFY_SHOP_ID not configured' });
-  try {
     let finalTitle = title;
     let finalDescription = description;
     let generatedTags = null;
@@ -759,7 +759,8 @@ OUTPUT JSON ONLY — no markdown:
       generated_warning: generatedWarning,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[Printify] Unhandled error:', err.message, err.stack);
+    return res.status(500).json({ error: 'Server error: ' + err.message });
   }
 });
 
