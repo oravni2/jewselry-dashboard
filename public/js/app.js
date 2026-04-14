@@ -82,10 +82,6 @@ function renderKanban() {
           ${catPill}
           <span class="kanban-avatar">${avatar}</span>
         </div>
-        <div class="kanban-card-actions" onclick="event.stopPropagation()">
-          ${canMoveLeft ? `<button class="kanban-move-btn" onclick="moveTask('${task.id}','${statusOrder[statusIdx - 1]}')" title="הזז שמאלה">←</button>` : ''}
-          ${canMoveRight ? `<button class="kanban-move-btn" onclick="moveTask('${task.id}','${statusOrder[statusIdx + 1]}')" title="הזז ימינה">→</button>` : ''}
-        </div>
       </div>`;
     }).join('');
   }
@@ -116,8 +112,15 @@ window.openTaskDetail = async function(id) {
   document.getElementById('task-detail-notes').value = '';
   document.getElementById('task-detail-modal').style.display = 'flex';
 
-  // Update done button text based on status
-  document.getElementById('btn-task-done').textContent = task.status === 'open' ? 'סמן כבוצע' : 'סמן כפתוח';
+  // Render status action buttons based on current status
+  const statusActions = document.getElementById('task-status-actions');
+  if (task.status === 'open') {
+    statusActions.innerHTML = '<button class="btn btn-ghost" onclick="changeTaskStatus(\'in_progress\')">העבר לבטיפול</button>';
+  } else if (task.status === 'in_progress') {
+    statusActions.innerHTML = '<button class="btn btn-ghost" onclick="changeTaskStatus(\'open\')">החזר לביצוע</button><button class="btn btn-ghost" onclick="changeTaskStatus(\'done\')">סמן כבוצע</button>';
+  } else if (task.status === 'done') {
+    statusActions.innerHTML = '<button class="btn btn-ghost" onclick="changeTaskStatus(\'in_progress\')">החזר לבטיפול</button>';
+  }
 };
 
 document.getElementById('btn-close-task-detail').addEventListener('click', () => {
@@ -145,13 +148,12 @@ document.getElementById('btn-save-task-notes').addEventListener('click', async (
   currentTaskDetail.description = updated;
 });
 
-document.getElementById('btn-task-done').addEventListener('click', async () => {
+window.changeTaskStatus = async function(newStatus) {
   if (!currentTaskDetail) return;
-  const newStatus = currentTaskDetail.status === 'open' ? 'done' : 'open';
   await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { status: newStatus } });
   document.getElementById('task-detail-modal').style.display = 'none';
   loadTasks();
-});
+};
 
 // Filter & search listeners
 document.getElementById('show-all-tasks').addEventListener('change', loadTasks);
