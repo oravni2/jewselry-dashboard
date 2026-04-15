@@ -1985,6 +1985,14 @@ document.getElementById('btn-apply-sales').addEventListener('click', async () =>
   loadProducts();
 });
 
+document.getElementById('btn-export-inventory').addEventListener('click', () => {
+  const table = document.getElementById('inv-physical-table');
+  if (!table) return;
+  const wb = XLSX.utils.table_to_book(table, { sheet: 'מלאי' });
+  const today = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `מלאי-${today}.xlsx`);
+});
+
 window.copyPodTags = function(inputId, btn) {
   const input = document.getElementById(inputId);
   if (!input) return;
