@@ -1228,58 +1228,95 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
-/* KPI Cards */
-.kpi-grid {
+/* Sales Row Filters */
+.sales-row-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+/* Sales KPI Row */
+.sales-kpi-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.kpi-card {
+.sales-kpi {
   background: white;
-  border-radius: var(--radius-md);
-  padding: 1.15rem;
-  border: 1px solid var(--stone-200);
-  box-shadow: var(--shadow-sm);
-  text-align: center;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.15rem;
+  border: 0.5px solid var(--stone-200);
 }
 
-.kpi-label {
-  font-size: 0.78rem;
+.sales-kpi-label {
+  font-size: 12px;
   font-weight: 600;
   color: var(--stone-500);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-bottom: 0.35rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.3rem;
 }
 
-.kpi-value {
-  font-size: 1.65rem;
-  font-weight: 700;
+.sales-kpi-value {
+  font-size: 26px;
+  font-weight: 500;
   color: var(--stone-900);
   font-family: 'Inter', sans-serif;
   line-height: 1.2;
 }
 
-.kpi-change {
+.sales-kpi-change {
   font-size: 0.78rem;
   font-weight: 600;
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
   min-height: 1.2em;
 }
 
-.kpi-change.positive {
-  color: var(--green-600);
+.sales-kpi-change.positive { color: var(--green-600); }
+.sales-kpi-change.negative { color: var(--red-600); }
+.sales-kpi-change.neutral { color: var(--stone-400); }
+
+/* Sales 2-col rows */
+.sales-row-2col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.kpi-change.negative {
-  color: var(--red-600);
+@media (min-width: 900px) {
+  .sales-row-2col {
+    grid-template-columns: 2fr 1fr;
+  }
 }
 
-.kpi-change.neutral {
-  color: var(--stone-400);
+.sales-col-wide, .sales-col-narrow {
+  min-width: 0;
 }
+
+.sales-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  border: 0.5px solid var(--stone-200);
+  height: 100%;
+}
+
+.sales-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--stone-700);
+  margin-bottom: 0.75rem;
+}
+
+/* Backward compat for old KPI classes used in JS */
+.kpi-change.positive { color: var(--green-600); }
+.kpi-change.negative { color: var(--red-600); }
+.kpi-change.neutral { color: var(--stone-400); }
 
 /* Type Breakdown */
 .sales-section {
@@ -2583,5 +2620,13 @@ textarea.listing-output-field {
   .sales-tab {
     padding: 0.5rem 0.85rem;
     font-size: 0.85rem;
+  }
+
+  .sales-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sales-row-2col {
+    grid-template-columns: 1fr;
   }
 }
