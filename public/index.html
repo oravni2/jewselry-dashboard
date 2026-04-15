@@ -341,106 +341,82 @@
 
     <!-- Tax Report Tab Content -->
     <div id="tax-content" class="sales-tab-content" style="display:none;">
-      <div class="tab-header">
+      <!-- Top bar: month + payments upload -->
+      <div class="sales-row-filters">
+        <div class="filter-group">
+          <label for="tax-month">חודש</label>
+          <select id="tax-month"><option value="">בחר חודש</option></select>
+        </div>
         <button class="btn btn-primary btn-add" id="btn-upload-payments">
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
           ייבוא Payments CSV
         </button>
       </div>
 
-      <!-- Tax Month Selector -->
-      <div class="sales-filters">
-        <div class="filter-group">
-          <label for="tax-month">חודש</label>
-          <select id="tax-month">
-            <option value="">בחר חודש</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Activity Summary Screenshot -->
-      <div class="card sales-section" id="tax-screenshot-section">
-        <div class="card-header">
-          <svg class="card-header-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-          <h2>העלאת Activity Summary מאטסי</h2>
-        </div>
-        <div class="listing-image-drop" id="tax-screenshot-drop">
-          <input type="file" id="tax-screenshot-input" accept="image/*" class="file-input-hidden">
-          <div id="tax-screenshot-preview" style="display:none;">
-            <img id="tax-screenshot-img" alt="">
-          </div>
-          <div id="tax-screenshot-placeholder">
-            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-            <span class="file-drop-text">לחץ או גרור צילום מסך לכאן</span>
-          </div>
-        </div>
-        <button class="btn btn-primary" id="btn-analyze-screenshot" style="margin-top:1rem;" disabled>
-          נתח צילום מסך
-        </button>
-        <div id="tax-screenshot-success" style="display:none;" class="tax-screenshot-success">
-          <span>✓ צילום מסך נותח בהצלחה</span>
-          <button class="btn btn-small" id="btn-replace-screenshot">החלף צילום מסך</button>
-        </div>
-        <div id="tax-screenshot-loading" class="loading" style="display:none;"><span class="spinner"></span>מנתח...</div>
-        <!-- Extracted Data (editable) -->
-        <div id="tax-extracted-data" style="display:none;">
-          <div class="tax-extracted-grid">
-            <div class="form-group"><label>Total Sales</label><input type="number" step="0.01" id="tax-ex-total-sales"></div>
-            <div class="form-group"><label>Refunds</label><input type="number" step="0.01" id="tax-ex-refunds"></div>
-            <div class="form-group"><label>Fees</label><input type="number" step="0.01" id="tax-ex-fees"></div>
-            <div class="form-group"><label>Etsy Ads</label><input type="number" step="0.01" id="tax-ex-etsy-ads"></div>
-            <div class="form-group"><label>Offsite Ads</label><input type="number" step="0.01" id="tax-ex-offsite-ads"></div>
-            <div class="form-group"><label>Etsy Plus</label><input type="number" step="0.01" id="tax-ex-etsy-plus"></div>
-            <div class="form-group"><label>Net Profit</label><input type="number" step="0.01" id="tax-ex-net-profit"></div>
-          </div>
-          <div class="tax-marketing-summary">
-            <h4>הוצאות פרסום מוכרות</h4>
-            <div class="tax-marketing-row">
-              Etsy Ads + Offsite Ads + Etsy Plus = <strong id="tax-marketing-total">$0</strong>
+      <!-- Two-column layout -->
+      <div class="cs-layout">
+        <!-- Left: screenshot upload -->
+        <div>
+          <div class="sales-card">
+            <div class="sales-card-title">העלאת Activity Summary מאטסי</div>
+            <div class="listing-image-drop" id="tax-screenshot-drop">
+              <input type="file" id="tax-screenshot-input" accept="image/*" class="file-input-hidden">
+              <div id="tax-screenshot-preview" style="display:none;">
+                <img id="tax-screenshot-img" alt="">
+              </div>
+              <div id="tax-screenshot-placeholder">
+                <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+                <span class="file-drop-text">לחץ או גרור צילום מסך לכאן</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btn-analyze-screenshot" style="margin-top:1rem;width:100%;" disabled>נתח צילום מסך</button>
+            <div id="tax-screenshot-success" style="display:none;" class="tax-screenshot-success">
+              <span>✓ צילום מסך נותח בהצלחה</span>
+              <button class="btn btn-small" id="btn-replace-screenshot">החלף צילום מסך</button>
+            </div>
+            <div id="tax-screenshot-loading" class="loading" style="display:none;"><span class="spinner"></span>מנתח...</div>
+            <!-- Extracted Data (editable) -->
+            <div id="tax-extracted-data" style="display:none;">
+              <div class="tax-extracted-grid">
+                <div class="form-group"><label>Total Sales</label><input type="number" step="0.01" id="tax-ex-total-sales"></div>
+                <div class="form-group"><label>Refunds</label><input type="number" step="0.01" id="tax-ex-refunds"></div>
+                <div class="form-group"><label>Fees</label><input type="number" step="0.01" id="tax-ex-fees"></div>
+                <div class="form-group"><label>Etsy Ads</label><input type="number" step="0.01" id="tax-ex-etsy-ads"></div>
+                <div class="form-group"><label>Offsite Ads</label><input type="number" step="0.01" id="tax-ex-offsite-ads"></div>
+                <div class="form-group"><label>Etsy Plus</label><input type="number" step="0.01" id="tax-ex-etsy-plus"></div>
+                <div class="form-group"><label>Net Profit</label><input type="number" step="0.01" id="tax-ex-net-profit"></div>
+              </div>
+              <div class="tax-marketing-summary">
+                <h4>הוצאות פרסום מוכרות</h4>
+                <div class="tax-marketing-row">Etsy Ads + Offsite Ads + Etsy Plus = <strong id="tax-marketing-total">$0</strong></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Tax KPI Cards -->
-      <div class="kpi-grid kpi-grid-6" id="tax-kpis">
-        <div class="kpi-card">
-          <div class="kpi-label">הכנסות POD</div>
-          <div class="kpi-value" id="tax-pod-net">$0</div>
+        <!-- Right: results -->
+        <div>
+          <div id="tax-results-empty" class="design-empty-state" style="min-height:300px;">
+            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z"/></svg>
+            בחר חודש והעלה צילום מסך לניתוח
+          </div>
+          <div id="tax-results-area" style="display:none;">
+            <div class="tax-kpi-grid">
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">הכנסות POD</div><div class="sales-kpi-value" id="tax-pod-net">$0</div></div>
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">הכנסות פיזי</div><div class="sales-kpi-value" id="tax-physical-net">$0</div></div>
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">הזמנות ישראל</div><div class="sales-kpi-value" id="tax-israel-net">$0</div></div>
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">סה"כ נטו</div><div class="sales-kpi-value" id="tax-total-net">$0</div></div>
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">סה"כ עמלות</div><div class="sales-kpi-value" id="tax-total-fees">$0</div></div>
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">הוצאות פרסום</div><div class="sales-kpi-value" id="tax-marketing-kpi">$0</div></div>
+              <div class="sales-card tax-kpi-item"><div class="sales-kpi-label">רווח לדיווח</div><div class="sales-kpi-value" id="tax-report-profit">$0</div></div>
+            </div>
+            <button class="btn btn-primary" id="btn-send-accountant" style="width:100%;margin-top:1rem;">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+              שלח לרואה חשבון
+            </button>
+            <span id="send-accountant-msg" class="saved-msg" style="display:none;margin-top:0.5rem;"></span>
+          </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-label">הכנסות פיזי</div>
-          <div class="kpi-value" id="tax-physical-net">$0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">הזמנות ישראל</div>
-          <div class="kpi-value" id="tax-israel-net">$0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">סה"כ נטו</div>
-          <div class="kpi-value" id="tax-total-net">$0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">סה"כ עמלות</div>
-          <div class="kpi-value" id="tax-total-fees">$0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">הוצאות פרסום</div>
-          <div class="kpi-value" id="tax-marketing-kpi">$0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">רווח לדיווח</div>
-          <div class="kpi-value" id="tax-report-profit">$0</div>
-        </div>
-      </div>
-
-      <!-- Send to Accountant -->
-      <div class="tab-header" style="justify-content:flex-start; margin-bottom:1rem;">
-        <button class="btn btn-primary" id="btn-send-accountant">
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
-          שלח לרואה חשבון
-        </button>
-        <span id="send-accountant-msg" class="saved-msg" style="display:none; margin-right:0.5rem;"></span>
       </div>
 
       <!-- Tax Detail Table -->

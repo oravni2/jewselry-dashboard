@@ -1215,10 +1215,17 @@ let taxPaymentData = null;
 
 async function loadTaxReport() {
   const month = document.getElementById('tax-month').value;
-  if (!month) return;
+  if (!month) {
+    document.getElementById('tax-results-empty').style.display = '';
+    document.getElementById('tax-results-area').style.display = 'none';
+    return;
+  }
 
   const data = await api(`/api/payments/tax-report?month=${month}`);
   if (data.error) return;
+
+  document.getElementById('tax-results-empty').style.display = 'none';
+  document.getElementById('tax-results-area').style.display = '';
 
   taxPaymentData = data;
   const currencySymbol = data.currency === 'ILS' ? '₪' : data.currency === 'USD' ? '$' : (data.currency || '$') + ' ';
