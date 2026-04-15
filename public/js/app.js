@@ -1922,14 +1922,25 @@ function handleDesignRef(file) {
 }
 
 // Midjourney prompt
-document.getElementById('btn-midjourney-prompt').addEventListener('click', async () => {
-  if (!designRefBase64) return alert('יש להעלות תמונת ייחוס');
-  const btn = document.getElementById('btn-midjourney-prompt');
-  const loading = document.getElementById('design-loading');
-  btn.disabled = true;
-  loading.style.display = 'flex';
+function designStartLoading(text) {
+  document.getElementById('btn-midjourney-prompt').disabled = true;
+  document.getElementById('btn-dalle-generate').disabled = true;
+  document.getElementById('design-empty-state').style.display = 'none';
   document.getElementById('mj-result').style.display = 'none';
   document.getElementById('dalle-result').style.display = 'none';
+  document.getElementById('design-loading-text').textContent = text;
+  document.getElementById('design-loading').style.display = 'flex';
+}
+
+function designStopLoading() {
+  document.getElementById('btn-midjourney-prompt').disabled = false;
+  document.getElementById('btn-dalle-generate').disabled = false;
+  document.getElementById('design-loading').style.display = 'none';
+}
+
+document.getElementById('btn-midjourney-prompt').addEventListener('click', async () => {
+  if (!designRefBase64) return alert('יש להעלות תמונת ייחוס');
+  designStartLoading('מייצר פרומפט...');
 
   try {
     const notes = document.getElementById('design-style-notes').value.trim();
@@ -1941,7 +1952,7 @@ document.getElementById('btn-midjourney-prompt').addEventListener('click', async
     document.getElementById('mj-prompt-text').value = result.prompt;
     document.getElementById('mj-result').style.display = 'block';
   } catch (err) { alert('שגיאה: ' + err.message); }
-  finally { btn.disabled = false; loading.style.display = 'none'; }
+  finally { designStopLoading(); }
 });
 
 document.getElementById('btn-copy-mj-prompt').addEventListener('click', () => {
@@ -1956,12 +1967,7 @@ document.getElementById('btn-copy-mj-prompt').addEventListener('click', () => {
 // DALL-E generate
 document.getElementById('btn-dalle-generate').addEventListener('click', async () => {
   if (!designRefBase64) return alert('יש להעלות תמונת ייחוס');
-  const btn = document.getElementById('btn-dalle-generate');
-  const loading = document.getElementById('design-loading');
-  btn.disabled = true;
-  loading.style.display = 'flex';
-  document.getElementById('mj-result').style.display = 'none';
-  document.getElementById('dalle-result').style.display = 'none';
+  designStartLoading('מייצר עיצוב...');
 
   try {
     const notes = document.getElementById('design-style-notes').value.trim();
@@ -1975,7 +1981,7 @@ document.getElementById('btn-dalle-generate').addEventListener('click', async ()
     document.getElementById('dalle-prompt-used').textContent = result.prompt_used;
     document.getElementById('dalle-result').style.display = 'block';
   } catch (err) { alert('שגיאה: ' + err.message); }
-  finally { btn.disabled = false; loading.style.display = 'none'; }
+  finally { designStopLoading(); }
 });
 
 // ---- FAB Quick Task ----
