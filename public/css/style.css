@@ -428,19 +428,35 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
+/* Tasks layout — list + side panel side by side on desktop */
+.tasks-layout {
+  display: flex;
+  gap: 1rem;
+}
+
+.tasks-list-area {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Status group */
 .task-group {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--stone-200);
+  overflow: hidden;
 }
 
 .task-group-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.85rem;
   cursor: pointer;
   user-select: none;
-  border-radius: var(--radius-sm);
+  background: var(--stone-50);
+  border-bottom: 1px solid var(--stone-200);
   transition: var(--transition);
 }
 
@@ -471,15 +487,13 @@ body {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--stone-400);
-  background: var(--stone-100);
-  padding: 0.1rem 0.45rem;
+  background: var(--stone-200);
+  padding: 0.1rem 0.5rem;
   border-radius: 999px;
 }
 
 .task-group-items {
-  border-right: 2px solid var(--stone-200);
-  margin-right: 0.75rem;
-  padding-right: 0;
+  padding: 0;
 }
 
 /* Task row */
@@ -487,15 +501,19 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.45rem 0.75rem;
+  padding: 0.5rem 0.85rem;
   border-bottom: 1px solid var(--stone-100);
   cursor: pointer;
   transition: var(--transition);
-  min-height: 40px;
+  min-height: 42px;
+}
+
+.task-row:last-child {
+  border-bottom: none;
 }
 
 .task-row:hover {
-  background: var(--stone-50);
+  background: var(--gold-50);
 }
 
 .task-row:hover .task-row-actions {
@@ -564,7 +582,24 @@ body {
 }
 
 .task-chip-priority {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+  color: white;
+}
+
+.task-chip-priority-urgent { background: #dc2626; }
+.task-chip-priority-high { background: #ea580c; }
+.task-chip-priority-normal { background: #3b82f6; }
+.task-chip-priority-low { background: #9ca3af; }
+
+.task-chip-cat-pill {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: white;
 }
 
 .task-chip-due {
@@ -572,13 +607,18 @@ body {
   color: var(--stone-400);
 }
 
+.task-chip-due.overdue {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 .task-chip-avatar {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--gold-100);
   color: var(--gold-700);
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -612,7 +652,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   cursor: pointer;
   color: var(--stone-400);
   font-size: 0.82rem;
@@ -621,6 +661,7 @@ body {
 
 .task-inline-add:hover {
   color: var(--gold-600);
+  background: var(--gold-50);
 }
 
 .task-inline-input {
@@ -634,46 +675,58 @@ body {
   color: var(--stone-800);
 }
 
-/* Side Panel */
+/* Side Panel — inline on desktop, overlay on mobile */
 .task-side-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-}
-
-.task-side-panel-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(28, 25, 23, 0.3);
+  width: 380px;
+  flex-shrink: 0;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--stone-200);
+  box-shadow: var(--shadow-md);
+  height: fit-content;
+  position: sticky;
+  top: 76px;
 }
 
 .task-side-panel-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 400px;
-  max-width: 90vw;
-  height: 100%;
-  background: white;
-  box-shadow: var(--shadow-lg);
-  padding: 1.5rem;
-  overflow-y: auto;
-  animation: slideInRight 0.2s ease;
+  padding: 1.25rem;
 }
 
 .task-side-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--stone-200);
 }
 
 .task-side-panel-header h3 {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--stone-800);
+}
+
+.task-side-panel-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--stone-400);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.task-side-panel-close:hover {
+  background: var(--stone-100);
+  color: var(--stone-700);
+}
+
+.task-side-panel-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 @keyframes slideInRight {
@@ -2162,9 +2215,18 @@ textarea.listing-output-field {
    Responsive — Mobile
    ============================================ */
 @media (max-width: 600px) {
-  .task-side-panel-content {
+  .tasks-layout {
+    flex-direction: column;
+  }
+
+  .task-side-panel {
+    position: fixed;
+    inset: 0;
     width: 100%;
-    max-width: 100vw;
+    z-index: 200;
+    border-radius: 0;
+    border: none;
+    overflow-y: auto;
   }
 
   .nav-inner {
