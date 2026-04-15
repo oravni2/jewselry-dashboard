@@ -59,8 +59,9 @@ function renderTaskList() {
   });
 
   const statusLabels = { open: 'לביצוע', in_progress: 'בטיפול', done: 'הושלם' };
-  const priorityIcons = { urgent: '🔴', high: '🟠', normal: '⚪', low: '🔵' };
+  const priorityLabels = { urgent: 'דחוף', high: 'גבוה', normal: 'רגיל', low: 'נמוך' };
   const container = document.getElementById('task-list-view');
+  const today = new Date().toISOString().split('T')[0];
 
   container.innerHTML = ['open', 'in_progress', 'done'].map(status => {
     const items = groups[status];
@@ -68,24 +69,27 @@ function renderTaskList() {
 
     const rows = collapsed ? '' : items.map(task => {
       const cat = task.categories;
-      const catDot = cat ? `<span class="task-chip-cat" style="background:${cat.color}" title="${cat.name}"></span>` : '';
-      const priorityIcon = priorityIcons[task.priority] || '';
+      const catPill = cat ? `<span class="task-chip-cat-pill" style="background:${cat.color}">${escapeHtml(cat.name)}</span>` : '';
+      const priorityBadge = task.priority && task.priority !== 'normal'
+        ? `<span class="task-chip-priority task-chip-priority-${task.priority}">${priorityLabels[task.priority]}</span>`
+        : '';
       const avatar = task.assigned_to === 'david' ? 'ד' : 'א';
       const isDone = task.status === 'done';
       const dueStr = task.due_date ? new Date(task.due_date).toLocaleDateString('he-IL') : '';
+      const isOverdue = task.due_date && task.due_date < today && !isDone;
+      const selected = currentTaskDetail && currentTaskDetail.id === task.id ? ' task-row-selected' : '';
 
-      return `<div class="task-row ${isDone ? 'done-row' : ''}" onclick="openSidePanel('${task.id}')">
+      return `<div class="task-row ${isDone ? 'done-row' : ''}${selected}" onclick="openSidePanel('${task.id}')">
         <button class="task-row-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTaskStatus('${task.id}', '${task.status}')"></button>
         <span class="task-row-title">${escapeHtml(task.title)}</span>
         <div class="task-row-chips">
-          ${catDot}
-          ${priorityIcon ? `<span class="task-chip-priority">${priorityIcon}</span>` : ''}
-          ${dueStr ? `<span class="task-chip-due">${dueStr}</span>` : ''}
+          ${priorityBadge}
+          ${catPill}
+          ${dueStr ? `<span class="task-chip-due ${isOverdue ? 'overdue' : ''}">${dueStr}</span>` : ''}
           <span class="task-chip-avatar">${avatar}</span>
         </div>
         <div class="task-row-actions" onclick="event.stopPropagation()">
           <button class="task-row-action" onclick="openSidePanel('${task.id}')" title="ערוך">✏️</button>
-          <button class="task-row-action" onclick="deleteTask('${task.id}', '${escapeHtml(task.title).replace(/'/g, "\\'")}')" title="מחק">🗑️</button>
         </div>
       </div>`;
     }).join('');
@@ -117,19 +121,12 @@ window.toggleTaskStatus = async function(id, currentStatus) {
   loadTasks();
 };
 
-window.deleteTask = async function(id, title) {
-  if (!confirm(`למחוק את המשימה "${title}"?`)) return;
-  // Mark as done instead of actual delete (safe)
-  await api('/api/tasks/' + id, { method: 'PATCH', body: { status: 'done' } });
-  loadTasks();
-};
-
 window.startInlineAdd = function(status, el) {
   const parent = el.parentElement;
   el.style.display = 'none';
   const row = document.createElement('div');
   row.className = 'task-row';
-  row.innerHTML = `<input class="task-inline-input" type="text" placeholder="הזן שם משימה..." autofocus onkeydown="if(event.key==='Enter')submitInlineAdd('${status}',this); if(event.key==='Escape'){this.parentElement.remove(); el.style.display='flex';}">`;
+  row.innerHTML = `<input class="task-inline-input" type="text" placeholder="הזן שם משימה..." autofocus onkeydown="if(event.key==='Enter')submitInlineAdd('${status}',this); if(event.key==='Escape'){this.parentElement.remove(); document.querySelector('.task-inline-add')&&(document.querySelector('.task-inline-add').style.display='flex');}">`;
   parent.insertBefore(row, el);
   row.querySelector('input').focus();
 };
@@ -142,7 +139,7 @@ window.submitInlineAdd = async function(status, input) {
 };
 
 // Side panel
-window.openSidePanel = async function(id) {
+window.openSidePanel = function(id) {
   const task = allTasks.find(t => t.id === id);
   if (!task) return;
   currentTaskDetail = task;
@@ -162,14 +159,13 @@ window.openSidePanel = async function(id) {
   });
 
   document.getElementById('task-side-panel').style.display = 'block';
+  renderTaskList(); // re-render to highlight selected
 };
 
 document.getElementById('btn-close-side-panel').addEventListener('click', () => {
   document.getElementById('task-side-panel').style.display = 'none';
-});
-
-document.querySelector('.task-side-panel-overlay').addEventListener('click', () => {
-  document.getElementById('task-side-panel').style.display = 'none';
+  currentTaskDetail = null;
+  renderTaskList();
 });
 
 document.getElementById('btn-side-panel-save').addEventListener('click', async () => {
@@ -186,6 +182,16 @@ document.getElementById('btn-side-panel-save').addEventListener('click', async (
   const result = await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body });
   if (result.error) { alert('שגיאה: ' + result.error); return; }
   document.getElementById('task-side-panel').style.display = 'none';
+  currentTaskDetail = null;
+  loadTasks();
+});
+
+document.getElementById('btn-side-panel-delete').addEventListener('click', async () => {
+  if (!currentTaskDetail) return;
+  if (!confirm(`למחוק את המשימה "${currentTaskDetail.title}"?`)) return;
+  await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { status: 'done' } });
+  document.getElementById('task-side-panel').style.display = 'none';
+  currentTaskDetail = null;
   loadTasks();
 });
 

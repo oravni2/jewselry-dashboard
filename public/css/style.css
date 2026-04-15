@@ -516,6 +516,11 @@ body {
   background: var(--gold-50);
 }
 
+.task-row-selected {
+  background: var(--gold-50);
+  border-right: 3px solid var(--gold-500);
+}
+
 .task-row:hover .task-row-actions {
   opacity: 1;
 }
