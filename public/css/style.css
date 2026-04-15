@@ -6,6 +6,23 @@
 
 /* --- Tokens --- */
 :root {
+  --c-bg: #FAF9F7;
+  --c-surface: #FFFFFF;
+  --c-border: #EDE9E4;
+  --c-border-strong: #D6D0CA;
+  --c-text: #1C1917;
+  --c-muted: #78716C;
+  --c-hint: #A8A29E;
+  --c-accent: #C96442;
+  --c-accent-light: #FEF0E7;
+  --c-gold: #D4A74A;
+  --c-success: #15803D;
+  --c-danger: #DC2626;
+  --c-warning: #D97706;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px;
+  --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+  --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-full: 9999px;
+
   --gold-50: #F5F0EB;
   --gold-100: #EDE9E4;
   --gold-200: #E8E2DC;
@@ -518,9 +535,9 @@ body {
   font-weight: 700;
 }
 
-.task-group-name-open { color: #1e40af; }
-.task-group-name-in_progress { color: #92400e; }
-.task-group-name-done { color: #15803D; }
+.task-group-name-open { color: #78716C; }
+.task-group-name-in_progress { color: #D97706; background: #FFFBEB; padding: 0.1rem 0.5rem; border-radius: 999px; }
+.task-group-name-done { color: #15803D; background: #F0FDF4; padding: 0.1rem 0.5rem; border-radius: 999px; }
 
 .task-group-count {
   font-size: 0.72rem;
@@ -642,7 +659,8 @@ body {
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
   font-weight: 600;
-  color: white;
+  color: #78716C;
+  background: #F5F0EB;
 }
 
 .task-chip-due {
@@ -1206,11 +1224,17 @@ body {
 }
 
 .empty-state {
-  text-align: center;
-  color: var(--stone-400);
-  padding: 3.5rem 1rem;
-  font-size: 0.92rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  padding: 32px;
 }
+.empty-state-icon { font-size: 32px; opacity: 0.3; }
+.empty-state-title { font-size: 14px; font-weight: 500; color: #78716C; }
+.empty-state-hint { font-size: 12px; color: #A8A29E; text-align: center; }
 
 /* ============================================
    Sales Analytics
@@ -2300,8 +2324,10 @@ textarea.listing-output-field {
 }
 
 .stock-badge-out {
-  background: var(--red-50);
-  color: var(--red-600);
+  background: #FEF2F2;
+  color: #DC2626;
+  font-size: 11px;
+  padding: 2px 8px;
 }
 
 .design-layout {
@@ -2325,16 +2351,16 @@ textarea.listing-output-field {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 8px;
   min-height: 250px;
   background: #FAF9F7;
   border: 2px dashed var(--stone-200);
   border-radius: var(--radius-lg);
-  color: var(--stone-400);
-  font-size: 0.88rem;
-  text-align: center;
-  padding: 2rem;
+  padding: 32px;
 }
+.design-empty-state .empty-state-icon { font-size: 32px; opacity: 0.3; }
+.design-empty-state .empty-state-title { font-size: 14px; font-weight: 500; color: #78716C; }
+.design-empty-state .empty-state-hint { font-size: 12px; color: #A8A29E; text-align: center; }
 
 .design-loading-state {
   display: flex;
