@@ -923,6 +923,46 @@ OUTPUT JSON ONLY — no markdown:
   }
 });
 
+// Sync pod product orientations from Printify variants
+app.post('/api/printify/sync-orientations', async (req, res) => {
+  const token = await getPrintifyToken();
+  if (!token) return res.status(400).json({ error: 'Printify API token not configured' });
+
+  const { data: setting } = await supabase.from('settings').select('value').eq('key', 'pod_products').single();
+  if (!setting) return res.status(400).json({ error: 'pod_products not configured' });
+
+  let products;
+  try { products = JSON.parse(setting.value); } catch (e) { return res.status(400).json({ error: 'Invalid pod_products JSON' }); }
+
+  let synced = 0;
+  for (const product of products) {
+    try {
+      const vRes = await fetch(`https://api.printify.com/v1/catalog/blueprints/${product.blueprint_id}/print_providers/${product.provider_id}/variants.json`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!vRes.ok) continue;
+      const vData = await vRes.json();
+      const orientations = new Set();
+      (vData.variants || []).forEach(v => {
+        const t = (v.title || '').toLowerCase();
+        if (t.includes('vertical')) orientations.add('vertical');
+        if (t.includes('horizontal')) orientations.add('horizontal');
+        if (t.includes('square')) orientations.add('square');
+      });
+      // If no orientation keywords found, assume all
+      product.orientations = orientations.size > 0 ? [...orientations] : ['vertical', 'horizontal', 'square'];
+      synced++;
+    } catch (e) {
+      console.error(`[Printify] Sync orientation failed for blueprint ${product.blueprint_id}:`, e.message);
+    }
+  }
+
+  // Save back to settings
+  await supabase.from('settings').upsert({ key: 'pod_products', value: JSON.stringify(products) }).select();
+  console.log(`[Printify] Synced orientations for ${synced}/${products.length} products`);
+  res.json({ synced, total: products.length });
+});
+
 // ---- INVENTORY / PRODUCTS API ----
 
 app.get('/api/products', async (req, res) => {
