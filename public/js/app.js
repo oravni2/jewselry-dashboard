@@ -98,7 +98,7 @@ function renderTaskList() {
 
     const rows = collapsed ? '' : items.map(task => {
       const cat = task.categories;
-      const catPill = cat ? `<span class="task-chip-cat-pill" style="background:${cat.color}">${escapeHtml(cat.name)}</span>` : '';
+      const catPill = cat ? `<span class="task-chip-cat-pill">${escapeHtml(cat.name)}</span>` : '';
       const priorityBadge = task.priority && task.priority !== 'normal'
         ? `<span class="task-chip-priority task-chip-priority-${task.priority}">${priorityLabels[task.priority]}</span>`
         : '';
