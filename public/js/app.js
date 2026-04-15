@@ -1767,7 +1767,7 @@ function renderPodGrid() {
     { key: 'horizontal', label: 'אופקי (Horizontal)' },
   ];
 
-  grid.innerHTML = sections.map(sec => {
+  let html = sections.map(sec => {
     const items = podProducts.filter(p => (p.orientations || ['vertical','horizontal','square']).includes(sec.key));
     if (!items.length) return '';
     const collapsed = podCollapsedSections.has(sec.key);
@@ -1792,6 +1792,32 @@ function renderPodGrid() {
       ${collapsed ? '' : `<div class="pod-orient-grid">${cards}</div>`}
     </div>`;
   }).join('');
+
+  // Unclassified products (empty/undefined orientations)
+  const unclassified = podProducts.filter(p => !p.orientations || p.orientations.length === 0);
+  if (unclassified.length) {
+    const secKey = 'unclassified';
+    const collapsed = podCollapsedSections.has(secKey);
+    const cards = collapsed ? '' : unclassified.map(p => {
+      const selKey = `${p.blueprint_id}-${secKey}`;
+      const isSelected = podSelectedProducts.some(s => s.key === selKey);
+      return `<div class="pod-blueprint-card ${isSelected ? 'selected' : ''}" data-sel-key="${selKey}" onclick="togglePodProduct(${p.blueprint_id}, '${secKey}')">
+        <div class="pod-blueprint-name">${escapeHtml(p.title)}</div>
+      </div>`;
+    }).join('');
+    const selectedCount = unclassified.filter(p => podSelectedProducts.some(s => s.key === `${p.blueprint_id}-${secKey}`)).length;
+    html += `<div class="pod-orient-section">
+      <div class="pod-orient-header ${collapsed ? 'collapsed' : ''}" onclick="togglePodSection('${secKey}')">
+        <span class="task-group-arrow">▼</span>
+        <span class="pod-orient-label">מוצרים נוספים (ללא סיווג)</span>
+        <span class="task-group-count">${unclassified.length}</span>
+        ${selectedCount > 0 ? `<span class="pod-orient-selected">${selectedCount} נבחרו</span>` : ''}
+      </div>
+      ${collapsed ? '' : `<div style="font-size:0.78rem;color:#A8A29E;padding:0.3rem 0.5rem;">מוצרים אלה תומכים בגדלים ללא סיווג orientation — בחר לפי שיקול דעתך</div><div class="pod-orient-grid">${cards}</div>`}
+    </div>`;
+  }
+
+  grid.innerHTML = html;
 }
 
 window.togglePodSection = function(key) {
