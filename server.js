@@ -944,13 +944,13 @@ app.post('/api/printify/sync-orientations', async (req, res) => {
       const vData = await vRes.json();
       const orientations = new Set();
       (vData.variants || []).forEach(v => {
-        const t = (v.title || '').toLowerCase();
-        if (t.includes('vertical')) orientations.add('vertical');
-        if (t.includes('horizontal')) orientations.add('horizontal');
-        if (t.includes('square')) orientations.add('square');
+        if (/\(vertical\)/i.test(v.title || '')) orientations.add('vertical');
+        if (/\(horizontal\)/i.test(v.title || '')) orientations.add('horizontal');
+        if (/\(square\)/i.test(v.title || '')) orientations.add('square');
       });
-      // If no orientation keywords found, assume all
-      product.orientations = orientations.size > 0 ? [...orientations] : ['vertical', 'horizontal', 'square'];
+      // If no orientation labels found, mark as unknown (won't appear in any section)
+      product.orientations = orientations.size > 0 ? [...orientations] : [];
+      console.log(`[Printify] Blueprint ${product.blueprint_id} "${product.title}": orientations = ${JSON.stringify(product.orientations)}`);
       synced++;
     } catch (e) {
       console.error(`[Printify] Sync orientation failed for blueprint ${product.blueprint_id}:`, e.message);
