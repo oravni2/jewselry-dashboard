@@ -1935,7 +1935,7 @@ document.getElementById('btn-midjourney-prompt').addEventListener('click', async
     const notes = document.getElementById('design-style-notes').value.trim();
     const result = await api('/api/design/midjourney-prompt', {
       method: 'POST',
-      body: { image: designRefBase64, style_notes: notes || undefined },
+      body: { image: (await compressImageIfNeeded(designRefBase64)).data, style_notes: notes || undefined },
     });
     if (result.error) { alert('שגיאה: ' + result.error); return; }
     document.getElementById('mj-prompt-text').value = result.prompt;
@@ -1967,7 +1967,7 @@ document.getElementById('btn-dalle-generate').addEventListener('click', async ()
     const notes = document.getElementById('design-style-notes').value.trim();
     const result = await api('/api/design/dalle-generate', {
       method: 'POST',
-      body: { image: designRefBase64, style_notes: notes || undefined },
+      body: { image: (await compressImageIfNeeded(designRefBase64)).data, style_notes: notes || undefined },
     });
     if (result.error) { alert('שגיאה: ' + result.error); return; }
     document.getElementById('dalle-result-img').src = result.image_url;
