@@ -278,7 +278,8 @@ document.getElementById('btn-generate-reply').addEventListener('click', async ()
 
   btn.disabled = true;
   outputDiv.style.display = 'none';
-  loadingDiv.style.display = 'block';
+  document.getElementById('cs-empty-state').style.display = 'none';
+  loadingDiv.style.display = 'flex';
 
   try {
     const result = await api('/api/cs/generate', {

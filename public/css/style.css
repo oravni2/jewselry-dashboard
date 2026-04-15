@@ -833,7 +833,18 @@ body {
    Customer Service
    ============================================ */
 .cs-form {
-  max-width: 700px;
+}
+
+.cs-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .cs-layout {
+    grid-template-columns: 40% 1fr;
+  }
 }
 
 .cs-output {
