@@ -1586,6 +1586,18 @@ body {
 .listing-form {
 }
 
+.listing-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .listing-layout {
+    grid-template-columns: 40% 1fr;
+  }
+}
+
 .listing-image-drop {
   border: 2px dashed var(--stone-300);
   border-radius: var(--radius-lg);

@@ -546,81 +546,88 @@
       </div>
     </div>
     <div class="listing-form">
-      <div class="card">
-        <!-- Image Upload -->
-        <div class="form-group">
-          <label>תמונת מוצר</label>
-          <div class="listing-image-drop" id="listing-drop-zone">
-            <input type="file" id="listing-image-input" accept="image/*" class="file-input-hidden">
-            <div id="listing-image-preview" style="display:none;">
-              <img id="listing-preview-img" alt="">
+      <div class="listing-layout">
+        <div class="listing-left">
+          <div class="card">
+            <div class="form-group">
+              <label>תמונת מוצר</label>
+              <div class="listing-image-drop" id="listing-drop-zone">
+                <input type="file" id="listing-image-input" accept="image/*" class="file-input-hidden">
+                <div id="listing-image-preview" style="display:none;">
+                  <img id="listing-preview-img" alt="">
+                </div>
+                <div id="listing-image-placeholder">
+                  <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+                  <span class="file-drop-text">לחץ או גרור תמונה לכאן</span>
+                </div>
+              </div>
             </div>
-            <div id="listing-image-placeholder">
-              <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" class="file-drop-icon"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-              <span class="file-drop-text">לחץ או גרור תמונה לכאן</span>
+            <div class="form-group">
+              <label for="listing-product-type">סוג מוצר</label>
+              <select id="listing-product-type">
+                <option value="">בחר סוג מוצר</option>
+                <option value="necklace">שרשרת</option>
+                <option value="bracelet">צמיד</option>
+                <option value="ring">טבעת</option>
+                <option value="challah_cover">כיסוי חלה</option>
+                <option value="candles">נרות</option>
+                <option value="tefillin_tallit">כיסוי תפילין/טלית</option>
+              </select>
             </div>
+            <div id="listing-dynamic-fields"></div>
+            <div class="form-group">
+              <label for="listing-notes">הערות נוספות <span class="label-hint">(אופציונלי)</span></label>
+              <textarea id="listing-notes" rows="3" placeholder="פרטים נוספים על המוצר..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-generate" id="btn-generate-listing">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+              צור ליסט
+            </button>
           </div>
         </div>
-        <!-- Product Type -->
-        <div class="form-group">
-          <label for="listing-product-type">סוג מוצר</label>
-          <select id="listing-product-type">
-            <option value="">בחר סוג מוצר</option>
-            <option value="necklace">שרשרת</option>
-            <option value="bracelet">צמיד</option>
-            <option value="ring">טבעת</option>
-            <option value="challah_cover">כיסוי חלה</option>
-            <option value="candles">נרות</option>
-            <option value="tefillin_tallit">כיסוי תפילין/טלית</option>
-          </select>
-        </div>
-        <!-- Dynamic Fields -->
-        <div id="listing-dynamic-fields"></div>
-        <!-- Notes -->
-        <div class="form-group">
-          <label for="listing-notes">הערות נוספות <span class="label-hint">(אופציונלי)</span></label>
-          <textarea id="listing-notes" rows="3" placeholder="פרטים נוספים על המוצר..."></textarea>
-        </div>
-        <!-- Generate Button -->
-        <button class="btn btn-primary btn-generate" id="btn-generate-listing">
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-          צור ליסט
-        </button>
-      </div>
-      <div id="listing-loading" class="loading" style="display:none;"><span class="spinner"></span>מייצר ליסטינג...</div>
-      <!-- Output -->
-      <div id="listing-output" style="display:none;">
-        <div id="listing-warning" class="listing-warning" style="display:none;"></div>
-        <div class="card listing-result-card">
-          <div class="listing-field-group">
-            <div class="listing-field-header">
-              <label>כותרת</label>
-              <button class="btn btn-copy listing-copy-btn" data-copy="listing-title-val">
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
-                העתק
-              </button>
-            </div>
-            <input type="text" id="listing-title-val" class="listing-output-field" readonly>
+        <div class="listing-right">
+          <div id="listing-empty-state" class="design-empty-state">
+            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" style="color:var(--stone-300);"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+            <span>העלה תמונה, בחר סוג מוצר ולחץ "צור ליסט"</span>
           </div>
-          <div class="listing-field-group">
-            <div class="listing-field-header">
-              <label>תיאור</label>
-              <button class="btn btn-copy listing-copy-btn" data-copy="listing-desc-val">
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
-                העתק
-              </button>
-            </div>
-            <textarea id="listing-desc-val" class="listing-output-field" rows="8" readonly></textarea>
+          <div id="listing-loading" class="design-loading-state" style="display:none;">
+            <span class="spinner"></span>
+            <span>מייצר ליסטינג...</span>
           </div>
-          <div class="listing-field-group">
-            <div class="listing-field-header">
-              <label>טאגים</label>
-              <button class="btn btn-copy listing-copy-btn" data-copy="listing-tags-val">
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
-                העתק
-              </button>
+          <div id="listing-output" style="display:none;">
+            <div id="listing-warning" class="listing-warning" style="display:none;"></div>
+            <div class="card listing-result-card">
+              <div class="listing-field-group">
+                <div class="listing-field-header">
+                  <label>כותרת</label>
+                  <button class="btn btn-copy listing-copy-btn" data-copy="listing-title-val">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                    העתק
+                  </button>
+                </div>
+                <input type="text" id="listing-title-val" class="listing-output-field" readonly>
+              </div>
+              <div class="listing-field-group">
+                <div class="listing-field-header">
+                  <label>תיאור</label>
+                  <button class="btn btn-copy listing-copy-btn" data-copy="listing-desc-val">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                    העתק
+                  </button>
+                </div>
+                <textarea id="listing-desc-val" class="listing-output-field" rows="8" readonly></textarea>
+              </div>
+              <div class="listing-field-group">
+                <div class="listing-field-header">
+                  <label>טאגים</label>
+                  <button class="btn btn-copy listing-copy-btn" data-copy="listing-tags-val">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+                    העתק
+                  </button>
+                </div>
+                <input type="text" id="listing-tags-val" class="listing-output-field" readonly>
+              </div>
             </div>
-            <input type="text" id="listing-tags-val" class="listing-output-field" readonly>
           </div>
         </div>
       </div>

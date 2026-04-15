@@ -1538,6 +1538,8 @@ document.getElementById('btn-generate-listing').addEventListener('click', async 
 
   btn.disabled = true;
   outputDiv.style.display = 'none';
+  const emptyState = document.getElementById('listing-empty-state');
+  if (emptyState) emptyState.style.display = 'none';
   loadingDiv.style.display = 'flex';
 
   try {
