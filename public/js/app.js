@@ -158,14 +158,28 @@ window.openSidePanel = function(id) {
     catSelect.innerHTML += `<option value="${cat.id}" ${cat.id === task.category_id ? 'selected' : ''}>${escapeHtml(cat.name)}</option>`;
   });
 
-  document.getElementById('task-side-panel').style.display = 'block';
-  renderTaskList(); // re-render to highlight selected
+  document.getElementById('task-detail-modal').style.display = 'flex';
+  renderTaskList();
 };
 
-document.getElementById('btn-close-side-panel').addEventListener('click', () => {
-  document.getElementById('task-side-panel').style.display = 'none';
+function closeTaskModal() {
+  document.getElementById('task-detail-modal').style.display = 'none';
   currentTaskDetail = null;
   renderTaskList();
+}
+
+document.getElementById('btn-close-side-panel').addEventListener('click', closeTaskModal);
+
+// Close on overlay click
+document.getElementById('task-detail-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('task-detail-modal')) closeTaskModal();
+});
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('task-detail-modal').style.display === 'flex') {
+    closeTaskModal();
+  }
 });
 
 document.getElementById('btn-side-panel-save').addEventListener('click', async () => {
@@ -181,8 +195,7 @@ document.getElementById('btn-side-panel-save').addEventListener('click', async (
   };
   const result = await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body });
   if (result.error) { alert('שגיאה: ' + result.error); return; }
-  document.getElementById('task-side-panel').style.display = 'none';
-  currentTaskDetail = null;
+  closeTaskModal();
   loadTasks();
 });
 
@@ -190,8 +203,7 @@ document.getElementById('btn-side-panel-delete').addEventListener('click', async
   if (!currentTaskDetail) return;
   if (!confirm(`למחוק את המשימה "${currentTaskDetail.title}"?`)) return;
   await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { status: 'done' } });
-  document.getElementById('task-side-panel').style.display = 'none';
-  currentTaskDetail = null;
+  closeTaskModal();
   loadTasks();
 });
 

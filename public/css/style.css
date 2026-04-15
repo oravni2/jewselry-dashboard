@@ -428,16 +428,7 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
-/* Tasks layout — list + side panel side by side on desktop */
-.tasks-layout {
-  display: flex;
-  gap: 1rem;
-}
-
-.tasks-list-area {
-  flex: 1;
-  min-width: 0;
-}
+/* Tasks layout */
 
 /* Status group */
 .task-group {
@@ -680,63 +671,164 @@ body {
   color: var(--stone-800);
 }
 
-/* Side Panel — inline on desktop, overlay on mobile */
-.task-side-panel {
-  width: 380px;
-  flex-shrink: 0;
-  background: white;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--stone-200);
-  box-shadow: var(--shadow-md);
-  height: fit-content;
-  position: sticky;
-  top: 76px;
-}
-
-.task-side-panel-content {
-  padding: 1.25rem;
-}
-
-.task-side-panel-header {
+/* Task Detail Modal (ClickUp style) */
+.task-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(28, 25, 23, 0.5);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 0.6rem;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.task-modal {
+  background: white;
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 780px;
+  min-width: 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.task-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--stone-200);
 }
 
-.task-side-panel-header h3 {
-  font-size: 1rem;
+.task-modal-title-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--stone-800);
+  font-family: inherit;
+  color: var(--stone-900);
+  background: transparent;
+  direction: rtl;
 }
 
-.task-side-panel-close {
+.task-modal-title-input::placeholder {
+  color: var(--stone-400);
+  font-weight: 400;
+}
+
+.task-modal-close {
   background: none;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   color: var(--stone-400);
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
-.task-side-panel-close:hover {
+.task-modal-close:hover {
   background: var(--stone-100);
   color: var(--stone-700);
 }
 
-.task-side-panel-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+.task-modal-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+@media (min-width: 600px) {
+  .task-modal-body {
+    grid-template-columns: 1fr 240px;
+  }
+}
+
+.task-modal-left {
+  padding: 1.25rem 1.5rem;
+  border-left: 1px solid var(--stone-100);
+}
+
+.task-modal-desc {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--stone-700);
+  background: transparent;
+  resize: vertical;
+  min-height: 150px;
+  direction: rtl;
+  line-height: 1.7;
+}
+
+.task-modal-desc::placeholder {
+  color: var(--stone-400);
+}
+
+.task-modal-right {
+  padding: 1.25rem;
+  background: var(--stone-50);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.task-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.task-modal-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--stone-500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.task-modal-field select,
+.task-modal-field input[type="date"] {
+  padding: 0.45rem 0.65rem;
+  border: 1.5px solid var(--stone-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: white;
+  color: var(--stone-800);
+  transition: var(--transition);
+}
+
+.task-modal-field select:focus,
+.task-modal-field input:focus {
+  outline: none;
+  border-color: var(--gold-500);
+}
+
+.task-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--stone-200);
+}
+
+.task-modal-delete {
+  color: var(--red-600) !important;
+  font-size: 0.82rem;
 }
 
 .task-ai-suggestion {
@@ -2220,18 +2312,12 @@ textarea.listing-output-field {
    Responsive — Mobile
    ============================================ */
 @media (max-width: 600px) {
-  .tasks-layout {
-    flex-direction: column;
+  .task-modal-overlay {
+    padding: 0.5rem;
   }
 
-  .task-side-panel {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    z-index: 200;
-    border-radius: 0;
-    border: none;
-    overflow-y: auto;
+  .task-modal {
+    max-height: 95vh;
   }
 
   .nav-inner {
