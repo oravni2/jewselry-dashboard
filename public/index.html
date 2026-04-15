@@ -64,26 +64,71 @@
         משימה חדשה
       </button>
     </div>
-    <div class="kanban-toolbar">
-      <input type="text" id="kanban-search" placeholder="חיפוש משימות..." class="kanban-search">
+    <div class="tasklist-toolbar">
+      <input type="text" id="task-search" placeholder="חיפוש משימות..." class="tasklist-search">
       <label class="toggle-label">
         <input type="checkbox" id="show-all-tasks">
         <span class="toggle-switch"></span>
         <span class="toggle-text">הצג את כל המשימות</span>
       </label>
     </div>
-    <div class="kanban-board">
-      <div class="kanban-column">
-        <div class="kanban-column-header kanban-header-open">לביצוע</div>
-        <div class="kanban-cards" id="kanban-open"></div>
-      </div>
-      <div class="kanban-column">
-        <div class="kanban-column-header kanban-header-progress">בתהליך</div>
-        <div class="kanban-cards" id="kanban-in_progress"></div>
-      </div>
-      <div class="kanban-column">
-        <div class="kanban-column-header kanban-header-done">הושלם</div>
-        <div class="kanban-cards" id="kanban-done"></div>
+    <div id="task-list-view"></div>
+
+    <!-- Side Panel -->
+    <div id="task-side-panel" class="task-side-panel" style="display:none;">
+      <div class="task-side-panel-overlay"></div>
+      <div class="task-side-panel-content">
+        <div class="task-side-panel-header">
+          <h3>פרטי משימה</h3>
+          <button class="btn btn-ghost" id="btn-close-side-panel">✕</button>
+        </div>
+        <div class="form-group">
+          <label>כותרת</label>
+          <input type="text" id="side-panel-title">
+        </div>
+        <div class="form-group">
+          <label>תיאור</label>
+          <textarea id="side-panel-desc" rows="5"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>סטטוס</label>
+            <select id="side-panel-status">
+              <option value="open">לביצוע</option>
+              <option value="in_progress">בטיפול</option>
+              <option value="done">הושלם</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>עדיפות</label>
+            <select id="side-panel-priority">
+              <option value="normal">רגיל</option>
+              <option value="low">נמוך</option>
+              <option value="high">גבוה</option>
+              <option value="urgent">דחוף</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>תאריך יעד</label>
+            <input type="date" id="side-panel-due">
+          </div>
+          <div class="form-group">
+            <label>משויך ל</label>
+            <select id="side-panel-assigned">
+              <option value="david">דוד</option>
+              <option value="or">אור</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>קטגוריה</label>
+          <select id="side-panel-category">
+            <option value="">ללא</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-side-panel-save" style="width:100%;">שמור שינויים</button>
       </div>
     </div>
   </main>
@@ -973,26 +1018,6 @@
     </div>
   </div>
 
-  <!-- Task Detail Modal -->
-  <div id="task-detail-modal" class="modal" style="display:none;">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content" style="max-width:520px;">
-      <h2 id="task-detail-title"></h2>
-      <div class="form-group">
-        <label>תיאור</label>
-        <div id="task-detail-desc" class="task-detail-desc"></div>
-      </div>
-      <div class="form-group">
-        <label for="task-detail-notes">הערות</label>
-        <textarea id="task-detail-notes" rows="3" placeholder="הוסף הערה..."></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" id="btn-save-task-notes">שמור הערות</button>
-        <div id="task-status-actions"></div>
-        <button class="btn btn-ghost" id="btn-close-task-detail">סגור</button>
-      </div>
-    </div>
-  </div>
 
   <!-- FAB Quick Task -->
   <button id="fab-new-task" title="משימה חדשה">
