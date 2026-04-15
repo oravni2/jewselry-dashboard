@@ -1571,10 +1571,11 @@ document.querySelectorAll('[data-pod-tab]').forEach(tab => {
 // ---- POD (Print on Demand) ----
 let podImageBase64 = null;
 let podProducts = [];
-let podSelectedBlueprints = new Set();
+let podSelectedProducts = []; // {blueprint_id, orientation}
+const podCollapsedSections = new Set();
 
 async function loadPodPage() {
-  podSelectedBlueprints.clear();
+  podSelectedProducts = [];
   document.getElementById('pod-results').style.display = 'none';
   document.getElementById('pod-loading').style.display = 'none';
 
@@ -1588,30 +1589,78 @@ async function loadPodPage() {
   }
 
   podProducts = Array.isArray(data) ? data : [];
-
   if (!podProducts.length) {
     grid.innerHTML = '<div class="empty-state">לא הוגדרו מוצרים. הוסף pod_products בהגדרות.</div>';
     return;
   }
 
-  grid.innerHTML = podProducts.map(p => `
-    <div class="pod-blueprint-card" data-bp-id="${p.blueprint_id}" onclick="togglePodBlueprint(${p.blueprint_id})">
-      <div class="pod-blueprint-name">${escapeHtml(p.title)}</div>
-    </div>
-  `).join('');
+  renderPodGrid();
 }
 
-window.togglePodBlueprint = function(id) {
-  if (podSelectedBlueprints.has(id)) {
-    podSelectedBlueprints.delete(id);
-  } else {
-    podSelectedBlueprints.add(id);
-  }
-  document.querySelectorAll('.pod-blueprint-card').forEach(card => {
-    const bpId = parseInt(card.dataset.bpId, 10);
-    card.classList.toggle('selected', podSelectedBlueprints.has(bpId));
-  });
+function renderPodGrid() {
+  const grid = document.getElementById('pod-blueprints-grid');
+  const sections = [
+    { key: 'square', label: 'ריבוע (Square)' },
+    { key: 'vertical', label: 'אנכי (Vertical)' },
+    { key: 'horizontal', label: 'אופקי (Horizontal)' },
+  ];
+
+  grid.innerHTML = sections.map(sec => {
+    const items = podProducts.filter(p => (p.orientations || ['vertical','horizontal','square']).includes(sec.key));
+    if (!items.length) return '';
+    const collapsed = podCollapsedSections.has(sec.key);
+
+    const cards = collapsed ? '' : items.map(p => {
+      const selKey = `${p.blueprint_id}-${sec.key}`;
+      const isSelected = podSelectedProducts.some(s => s.key === selKey);
+      return `<div class="pod-blueprint-card ${isSelected ? 'selected' : ''}" data-sel-key="${selKey}" onclick="togglePodProduct(${p.blueprint_id}, '${sec.key}')">
+        <div class="pod-blueprint-name">${escapeHtml(p.title)}</div>
+      </div>`;
+    }).join('');
+
+    const selectedCount = items.filter(p => podSelectedProducts.some(s => s.key === `${p.blueprint_id}-${sec.key}`)).length;
+
+    return `<div class="pod-orient-section">
+      <div class="pod-orient-header ${collapsed ? 'collapsed' : ''}" onclick="togglePodSection('${sec.key}')">
+        <span class="task-group-arrow">▼</span>
+        <span class="pod-orient-label">${sec.label}</span>
+        <span class="task-group-count">${items.length}</span>
+        ${selectedCount > 0 ? `<span class="pod-orient-selected">${selectedCount} נבחרו</span>` : ''}
+      </div>
+      ${collapsed ? '' : `<div class="pod-orient-grid">${cards}</div>`}
+    </div>`;
+  }).join('');
+}
+
+window.togglePodSection = function(key) {
+  if (podCollapsedSections.has(key)) podCollapsedSections.delete(key);
+  else podCollapsedSections.add(key);
+  renderPodGrid();
 };
+
+window.togglePodProduct = function(blueprintId, orientation) {
+  const selKey = `${blueprintId}-${orientation}`;
+  const idx = podSelectedProducts.findIndex(s => s.key === selKey);
+  if (idx >= 0) {
+    podSelectedProducts.splice(idx, 1);
+  } else {
+    podSelectedProducts.push({ key: selKey, blueprint_id: blueprintId, orientation });
+  }
+  renderPodGrid();
+};
+
+// Sync orientations button
+document.getElementById('btn-sync-orientations')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-sync-orientations');
+  btn.disabled = true;
+  btn.textContent = 'מסנכרן...';
+  const result = await api('/api/printify/sync-orientations', { method: 'POST' });
+  btn.textContent = 'סנכרן מוצרים';
+  btn.disabled = false;
+  if (result.error) { alert('שגיאה: ' + result.error); return; }
+  alert(`סונכרנו ${result.synced}/${result.total} מוצרים`);
+  loadPodPage();
+});
 
 // POD image upload
 const podDropZone = document.getElementById('pod-drop-zone');
@@ -1675,7 +1724,7 @@ async function compressImageIfNeeded(base64) {
 // Create POD products
 document.getElementById('btn-create-pod').addEventListener('click', async () => {
   if (!podImageBase64) return alert('יש להעלות עיצוב');
-  if (podSelectedBlueprints.size === 0) return alert('יש לבחור לפחות מוצר אחד');
+  if (podSelectedProducts.length === 0) return alert('יש לבחור לפחות מוצר אחד');
 
   const title = document.getElementById('pod-title').value.trim();
   const description = document.getElementById('pod-description').value.trim();
@@ -1699,10 +1748,10 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
     if (uploadRes.error) { alert('שגיאה בהעלאת תמונה: ' + uploadRes.error); return; }
     const imageId = uploadRes.id;
 
-    // Step 2: Create products for each selected product
+    // Step 2: Create products for each selected product+orientation
     const results = [];
-    for (const bpId of podSelectedBlueprints) {
-      const product = podProducts.find(p => p.blueprint_id === bpId);
+    for (const sel of podSelectedProducts) {
+      const product = podProducts.find(p => p.blueprint_id === sel.blueprint_id);
       if (!product) continue;
 
       // Fetch variants for this blueprint + provider combo
@@ -1715,7 +1764,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
       // Use ALL enabled variants
       const variants = variantsData.variants.map(v => ({ id: v.id, title: v.title, price: 0, is_enabled: true }));
 
-      // Create product
+      // Create product — use the section orientation, not the image orientation
       const createRes = await api('/api/printify/create-product', {
         method: 'POST',
         body: {
@@ -1727,7 +1776,7 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
           image_id: imageId,
           generate_content: generateContent,
           image_base64: generateContent ? compressedImage : undefined,
-          orientation: imageOrientation,
+          orientation: sel.orientation,
         },
       });
 
