@@ -11,16 +11,33 @@ async function api(url, options = {}) {
   return res.json();
 }
 
-// ---- Navigation ----
-document.querySelectorAll('.nav-link').forEach(link => {
+// ---- Navigation (Sidebar) ----
+document.querySelectorAll('.sidebar-link:not(.sidebar-parent)').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
     const page = link.dataset.page;
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
+    const tab = link.dataset.tab;
 
+    // Update active state
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+
+    // Switch page
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.classList.add('active');
+
+    // Switch sub-tab if specified
+    if (tab && pageEl) {
+      pageEl.querySelectorAll('.sales-tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+      pageEl.querySelectorAll('.sales-tab').forEach(t => t.classList.remove('active'));
+      const targetTab = document.getElementById(tab);
+      if (targetTab) { targetTab.classList.add('active'); targetTab.style.display = 'block'; }
+      const tabBtn = pageEl.querySelector(`[data-sales-tab="${tab}"], [data-pod-tab="${tab}"]`);
+      if (tabBtn) tabBtn.classList.add('active');
+    }
+
+    // Load page data
     if (page === 'tasks') loadTasks();
     if (page === 'sales') loadSalesPage();
     if (page === 'listing') initListingPage();
@@ -28,7 +45,18 @@ document.querySelectorAll('.nav-link').forEach(link => {
     if (page === 'inventory') loadInventoryPage();
     if (page === 'pod') loadPodPage();
     if (page === 'settings') loadSettings();
+
+    // Close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
   });
+});
+
+// Mobile hamburger
+document.getElementById('sidebar-hamburger').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.add('open');
+});
+document.getElementById('sidebar-close-mobile').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
 });
 
 // ---- Tasks (List View) ----
