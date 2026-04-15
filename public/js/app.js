@@ -616,6 +616,7 @@ async function loadSalesData() {
 
   // Monthly history chart
   renderHistoryChart();
+  checkCelebrationToast();
 
   // Diamond table
   const diamondSection = document.getElementById('diamond-section');
@@ -808,8 +809,8 @@ function renderDailyChart(rows, month) {
       datasets: [{
         label: 'הכנסות ($)',
         data,
-        backgroundColor: 'rgba(92, 122, 94, 0.6)',
-        borderColor: 'rgba(74, 106, 76, 0.8)',
+        backgroundColor: '#E8E2DC',
+        borderColor: '#E8E2DC',
         borderWidth: 1,
         borderRadius: 3,
       }]
@@ -900,12 +901,12 @@ async function renderHistoryChart() {
         {
           label: 'סה״כ הכנסות',
           data: totalData,
-          borderColor: '#5C7A5E',
-          backgroundColor: 'rgba(92,122,94,0.1)',
+          borderColor: '#1C1917',
+          backgroundColor: 'rgba(28,25,23,0.08)',
           fill: true,
           tension: 0.3,
           pointRadius: 4,
-          pointBackgroundColor: '#5C7A5E',
+          pointBackgroundColor: '#1C1917',
         },
         {
           label: 'הכנסות POD',
@@ -932,6 +933,35 @@ async function renderHistoryChart() {
       },
     },
   });
+}
+
+// Celebration toast — record month
+async function checkCelebrationToast() {
+  if (sessionStorage.getItem('celebration_shown')) return;
+  const data = await api('/api/sales/history');
+  if (!data || data.length < 2) return;
+  const sorted = [...data].sort((a, b) => a.month.localeCompare(b.month));
+  const current = sorted[sorted.length - 1];
+  const previous = sorted.slice(0, -1);
+  const prevMax = Math.max(...previous.map(d => d.total));
+  if (current.total > prevMax && prevMax > 0) {
+    sessionStorage.setItem('celebration_shown', '1');
+    const pct = Math.round((current.total / prevMax - 1) * 100);
+    setTimeout(() => {
+      const toast = document.createElement('div');
+      toast.className = 'celebration-toast';
+      toast.innerHTML = `
+        <span class="celebration-toast-dot">✦</span>
+        <div class="celebration-toast-text">
+          <span class="celebration-toast-main">חודש שיא — $${current.total.toLocaleString('en-US', {maximumFractionDigits:0})}</span>
+          <span class="celebration-toast-sub">↑ ${pct}% לעומת החודש הגבוה הקודם</span>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.classList.add('fade-out'); }, 3000);
+      setTimeout(() => { toast.remove(); }, 3500);
+    }, 1000);
+  }
 }
 
 // Sales filter listeners
@@ -1380,7 +1410,7 @@ document.getElementById('btn-send-accountant').addEventListener('click', async (
     const mailto = `mailto:${encodeURIComponent(result.email)}?subject=${encodeURIComponent(result.subject)}&body=${encodeURIComponent(result.body)}`;
     window.open(mailto, '_blank');
     msg.style.display = 'inline';
-    msg.style.color = 'var(--green-600)';
+    msg.style.color = '#15803D';
     msg.textContent = 'נפתח חלון אימייל';
   }
   setTimeout(() => { msg.style.display = 'none'; }, 4000);
