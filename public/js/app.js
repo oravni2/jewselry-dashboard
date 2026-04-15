@@ -600,6 +600,8 @@ async function loadSalesData() {
 
   if (summary.error) return;
 
+  renderAlerts();
+
   renderKPIs(summary, type);
   renderTypeBreakdown(summary.current, type);
   renderBestsellers(summary.current, type);
@@ -611,6 +613,9 @@ async function loadSalesData() {
   const salesRows = await api(salesUrl);
   renderDailyChart(salesRows, month);
   renderCountryBreakdown(salesRows);
+
+  // Monthly history chart
+  renderHistoryChart();
 
   // Diamond table
   const diamondSection = document.getElementById('diamond-section');
@@ -837,6 +842,95 @@ function renderDailyChart(rows, month) {
         }
       }
     }
+  });
+}
+
+async function renderAlerts() {
+  const strip = document.getElementById('sales-alerts-strip');
+  const alerts = await api('/api/sales/alerts');
+  if (!alerts || !alerts.length) { strip.style.display = 'none'; return; }
+
+  const dismissed = JSON.parse(localStorage.getItem('dismissed_alerts') || '[]');
+  const visible = alerts.filter(a => !dismissed.includes(a.message));
+  if (!visible.length) { strip.style.display = 'none'; return; }
+
+  const icons = {
+    warning: '<svg class="alert-icon" width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+    info: '<svg class="alert-icon" width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>',
+  };
+
+  strip.innerHTML = visible.map(a => `
+    <span class="sales-alert-chip ${a.type}">
+      ${icons[a.type] || icons.info}
+      <span>${a.message}</span>
+      <button class="alert-dismiss" data-msg="${a.message.replace(/"/g, '&quot;')}">&times;</button>
+    </span>
+  `).join('');
+  strip.style.display = 'flex';
+
+  strip.querySelectorAll('.alert-dismiss').forEach(btn => {
+    btn.onclick = () => {
+      const msg = btn.getAttribute('data-msg');
+      const list = JSON.parse(localStorage.getItem('dismissed_alerts') || '[]');
+      list.push(msg);
+      localStorage.setItem('dismissed_alerts', JSON.stringify(list));
+      btn.closest('.sales-alert-chip').remove();
+      if (!strip.querySelector('.sales-alert-chip')) strip.style.display = 'none';
+    };
+  });
+}
+
+let historyChartInstance = null;
+async function renderHistoryChart() {
+  const section = document.getElementById('history-chart-section');
+  const data = await api('/api/sales/history');
+  if (!data || data.length < 2) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  const labels = data.map(d => d.month);
+  const totalData = data.map(d => +(d.total || 0).toFixed(2));
+  const podData = data.map(d => +(d.pod || 0).toFixed(2));
+
+  if (historyChartInstance) historyChartInstance.destroy();
+  historyChartInstance = new Chart(document.getElementById('history-chart-canvas'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'סה״כ הכנסות',
+          data: totalData,
+          borderColor: '#5C7A5E',
+          backgroundColor: 'rgba(92,122,94,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#5C7A5E',
+        },
+        {
+          label: 'הכנסות POD',
+          data: podData,
+          borderColor: '#B8860B',
+          backgroundColor: 'rgba(184,134,11,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#B8860B',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', align: 'start', rtl: true, labels: { font: { family: 'Rubik' } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Rubik', size: 11 } } },
+        y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString(), font: { family: 'Rubik', size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+      },
+    },
   });
 }
 

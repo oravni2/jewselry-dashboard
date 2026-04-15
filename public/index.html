@@ -233,6 +233,9 @@
       </button>
     </div>
 
+    <!-- Alerts Strip -->
+    <div id="sales-alerts-strip" class="sales-alerts-strip" style="display:none;"></div>
+
     <!-- Row 2: KPI Cards -->
     <div class="sales-kpi-row" id="sales-kpis">
       <div class="sales-kpi">
@@ -294,6 +297,14 @@
             <div class="empty-state" style="padding:1rem;">אין נתונים</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Row 5: Monthly Trend Chart -->
+    <div class="sales-card" id="history-chart-section" style="display:none;">
+      <div class="sales-card-title">מגמת מכירות חודשית</div>
+      <div class="chart-container">
+        <canvas id="history-chart-canvas"></canvas>
       </div>
     </div>
 

@@ -306,6 +306,97 @@ app.get('/api/sales/months', async (req, res) => {
   res.json(months);
 });
 
+// ---- SALES ALERTS ----
+app.get('/api/sales/alerts', async (req, res) => {
+  const alerts = [];
+
+  // Get all months
+  const { data: allSales, error } = await supabase
+    .from('etsy_sales')
+    .select('report_month, item_name, price, quantity, sale_date');
+  if (error) return res.status(500).json({ error: error.message });
+  if (!allSales || !allSales.length) return res.json([]);
+
+  // Aggregate by month
+  const monthMap = {};
+  allSales.forEach(r => {
+    const m = r.report_month;
+    if (!monthMap[m]) monthMap[m] = 0;
+    monthMap[m] += (r.price || 0) * (r.quantity || 1);
+  });
+  const months = Object.keys(monthMap).sort();
+
+  // 1) Revenue drop >20% vs previous month
+  if (months.length >= 2) {
+    const cur = monthMap[months[months.length - 1]];
+    const prev = monthMap[months[months.length - 2]];
+    if (prev > 0 && cur < prev * 0.8) {
+      const pct = Math.round((1 - cur / prev) * 100);
+      alerts.push({ type: 'warning', message: `ירידה של ${pct}% בהכנסות לעומת החודש הקודם` });
+    }
+  }
+
+  // 2) Top 3 products with 0 sales in last 30 days
+  const itemTotals = {};
+  const recentItems = new Set();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);
+
+  allSales.forEach(r => {
+    const key = r.item_name;
+    if (!itemTotals[key]) itemTotals[key] = 0;
+    itemTotals[key] += r.quantity || 1;
+    if (r.sale_date >= cutoff) recentItems.add(key);
+  });
+
+  const top3 = Object.entries(itemTotals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name]) => name);
+
+  top3.forEach(name => {
+    if (!recentItems.has(name)) {
+      const short = name.length > 30 ? name.slice(0, 28) + '…' : name;
+      alerts.push({ type: 'warning', message: `"${short}" — 0 מכירות ב-30 יום` });
+    }
+  });
+
+  // 3) Last uploaded report >35 days old
+  const latestMonth = months[months.length - 1];
+  if (latestMonth) {
+    const [ly, lm] = latestMonth.split('-').map(Number);
+    const endOfMonth = new Date(ly, lm, 0);
+    const daysSince = Math.floor((Date.now() - endOfMonth.getTime()) / 86400000);
+    if (daysSince > 35) {
+      alerts.push({ type: 'info', message: `הדוח האחרון הועלה לפני ${daysSince} יום — שקול לעדכן` });
+    }
+  }
+
+  res.json(alerts);
+});
+
+// ---- SALES HISTORY (monthly aggregates) ----
+app.get('/api/sales/history', async (req, res) => {
+  const { data, error } = await supabase
+    .from('etsy_sales')
+    .select('report_month, price, quantity, listing_type');
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const map = {};
+  for (const r of data) {
+    const m = r.report_month;
+    if (!map[m]) map[m] = { month: m, total: 0, pod: 0 };
+    const rev = (r.price || 0) * (r.quantity || 1);
+    map[m].total += rev;
+    if (r.listing_type === 'POD') map[m].pod += rev;
+  }
+
+  const result = Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
+  res.json(result);
+});
+
 // Upload/import sales data
 app.post('/api/sales/import', async (req, res) => {
   const { rows, report_month } = req.body;
