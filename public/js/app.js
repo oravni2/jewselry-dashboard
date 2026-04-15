@@ -30,8 +30,10 @@ document.querySelectorAll('.nav-link').forEach(link => {
   });
 });
 
-// ---- Tasks (Kanban) ----
+// ---- Tasks (List View) ----
 let allTasks = [];
+let currentTaskDetail = null;
+const collapsedGroups = new Set();
 
 async function loadTasks() {
   const showAll = document.getElementById('show-all-tasks').checked;
@@ -39,125 +41,157 @@ async function loadTasks() {
   if (!showAll) url += 'assigned_to=david&';
 
   allTasks = await api(url);
-  renderKanban();
+  renderTaskList();
 }
 
-function renderKanban() {
-  const search = (document.getElementById('kanban-search')?.value || '').trim().toLowerCase();
+function renderTaskList() {
+  const search = (document.getElementById('task-search')?.value || '').trim().toLowerCase();
   const tasks = Array.isArray(allTasks) ? allTasks : [];
 
   const filtered = search
     ? tasks.filter(t => t.title.toLowerCase().includes(search) || (t.description || '').toLowerCase().includes(search))
     : tasks;
 
-  const columns = { open: [], in_progress: [], done: [] };
+  const groups = { open: [], in_progress: [], done: [] };
   filtered.forEach(t => {
-    const col = columns[t.status] || columns.open;
-    col.push(t);
+    const g = groups[t.status] || groups.open;
+    g.push(t);
   });
 
+  const statusLabels = { open: 'לביצוע', in_progress: 'בטיפול', done: 'הושלם' };
   const priorityIcons = { urgent: '🔴', high: '🟠', normal: '⚪', low: '🔵' };
-  const statusOrder = ['open', 'in_progress', 'done'];
+  const container = document.getElementById('task-list-view');
 
-  for (const status of statusOrder) {
-    const container = document.getElementById('kanban-' + status);
-    const tasks = columns[status];
-    if (!tasks.length) {
-      container.innerHTML = '<div class="empty-state" style="padding:1.5rem; font-size:0.8rem;">אין משימות</div>';
-      continue;
-    }
-    container.innerHTML = tasks.map(task => {
+  container.innerHTML = ['open', 'in_progress', 'done'].map(status => {
+    const items = groups[status];
+    const collapsed = collapsedGroups.has(status);
+
+    const rows = collapsed ? '' : items.map(task => {
       const cat = task.categories;
-      const catPill = cat ? `<span class="kanban-cat-pill" style="background:${cat.color}">${escapeHtml(cat.name)}</span>` : '';
-      const priorityIcon = priorityIcons[task.priority] || '⚪';
+      const catDot = cat ? `<span class="task-chip-cat" style="background:${cat.color}" title="${cat.name}"></span>` : '';
+      const priorityIcon = priorityIcons[task.priority] || '';
       const avatar = task.assigned_to === 'david' ? 'ד' : 'א';
-      const statusIdx = statusOrder.indexOf(task.status);
-      const canMoveRight = statusIdx < 2;
-      const canMoveLeft = statusIdx > 0;
+      const isDone = task.status === 'done';
+      const dueStr = task.due_date ? new Date(task.due_date).toLocaleDateString('he-IL') : '';
 
-      return `<div class="kanban-card" onclick="openTaskDetail('${task.id}')">
-        <div class="kanban-card-title">${escapeHtml(task.title)}</div>
-        <div class="kanban-card-meta">
-          <span class="kanban-priority">${priorityIcon}</span>
-          ${catPill}
-          <span class="kanban-avatar">${avatar}</span>
+      return `<div class="task-row ${isDone ? 'done-row' : ''}" onclick="openSidePanel('${task.id}')">
+        <button class="task-row-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTaskStatus('${task.id}', '${task.status}')"></button>
+        <span class="task-row-title">${escapeHtml(task.title)}</span>
+        <div class="task-row-chips">
+          ${catDot}
+          ${priorityIcon ? `<span class="task-chip-priority">${priorityIcon}</span>` : ''}
+          ${dueStr ? `<span class="task-chip-due">${dueStr}</span>` : ''}
+          <span class="task-chip-avatar">${avatar}</span>
+        </div>
+        <div class="task-row-actions" onclick="event.stopPropagation()">
+          <button class="task-row-action" onclick="openSidePanel('${task.id}')" title="ערוך">✏️</button>
+          <button class="task-row-action" onclick="deleteTask('${task.id}', '${escapeHtml(task.title).replace(/'/g, "\\'")}')" title="מחק">🗑️</button>
         </div>
       </div>`;
     }).join('');
-  }
+
+    const inlineAdd = collapsed ? '' : `<div class="task-inline-add" onclick="startInlineAdd('${status}', this)">
+      <span>+</span> <span>משימה חדשה</span>
+    </div>`;
+
+    return `<div class="task-group">
+      <div class="task-group-header ${collapsed ? 'collapsed' : ''}" onclick="toggleGroup('${status}')">
+        <span class="task-group-arrow">▼</span>
+        <span class="task-group-name task-group-name-${status}">${statusLabels[status]}</span>
+        <span class="task-group-count">${items.length}</span>
+      </div>
+      <div class="task-group-items">${rows}${inlineAdd}</div>
+    </div>`;
+  }).join('');
 }
 
-window.moveTask = async function(id, newStatus) {
+window.toggleGroup = function(status) {
+  if (collapsedGroups.has(status)) collapsedGroups.delete(status);
+  else collapsedGroups.add(status);
+  renderTaskList();
+};
+
+window.toggleTaskStatus = async function(id, currentStatus) {
+  const newStatus = currentStatus === 'done' ? 'open' : 'done';
   await api('/api/tasks/' + id, { method: 'PATCH', body: { status: newStatus } });
   loadTasks();
 };
 
-async function toggleTask(id, currentStatus) {
-  const newStatus = currentStatus === 'open' ? 'done' : 'open';
-  await api('/api/tasks/' + id, { method: 'PATCH', body: { status: newStatus } });
+window.deleteTask = async function(id, title) {
+  if (!confirm(`למחוק את המשימה "${title}"?`)) return;
+  // Mark as done instead of actual delete (safe)
+  await api('/api/tasks/' + id, { method: 'PATCH', body: { status: 'done' } });
   loadTasks();
-}
+};
 
-// Task detail modal
-let currentTaskDetail = null;
+window.startInlineAdd = function(status, el) {
+  const parent = el.parentElement;
+  el.style.display = 'none';
+  const row = document.createElement('div');
+  row.className = 'task-row';
+  row.innerHTML = `<input class="task-inline-input" type="text" placeholder="הזן שם משימה..." autofocus onkeydown="if(event.key==='Enter')submitInlineAdd('${status}',this); if(event.key==='Escape'){this.parentElement.remove(); el.style.display='flex';}">`;
+  parent.insertBefore(row, el);
+  row.querySelector('input').focus();
+};
 
-window.openTaskDetail = async function(id) {
-  const tasks = await api('/api/tasks?');
-  const task = (Array.isArray(tasks) ? tasks : []).find(t => t.id === id);
+window.submitInlineAdd = async function(status, input) {
+  const title = input.value.trim();
+  if (!title) { input.parentElement.remove(); renderTaskList(); return; }
+  await api('/api/tasks', { method: 'POST', body: { title, status, assigned_to: 'david' } });
+  loadTasks();
+};
+
+// Side panel
+window.openSidePanel = async function(id) {
+  const task = allTasks.find(t => t.id === id);
   if (!task) return;
   currentTaskDetail = task;
 
-  document.getElementById('task-detail-title').textContent = task.title;
-  document.getElementById('task-detail-desc').textContent = task.description || 'אין תיאור';
-  document.getElementById('task-detail-notes').value = '';
-  document.getElementById('task-detail-modal').style.display = 'flex';
+  document.getElementById('side-panel-title').value = task.title || '';
+  document.getElementById('side-panel-desc').value = task.description || '';
+  document.getElementById('side-panel-status').value = task.status || 'open';
+  document.getElementById('side-panel-priority').value = task.priority || 'normal';
+  document.getElementById('side-panel-due').value = task.due_date || '';
+  document.getElementById('side-panel-assigned').value = task.assigned_to || 'david';
 
-  // Render status action buttons based on current status
-  const statusActions = document.getElementById('task-status-actions');
-  if (task.status === 'open') {
-    statusActions.innerHTML = '<button class="btn btn-ghost" onclick="changeTaskStatus(\'in_progress\')">העבר לבטיפול</button>';
-  } else if (task.status === 'in_progress') {
-    statusActions.innerHTML = '<button class="btn btn-ghost" onclick="changeTaskStatus(\'open\')">החזר לביצוע</button><button class="btn btn-ghost" onclick="changeTaskStatus(\'done\')">סמן כבוצע</button>';
-  } else if (task.status === 'done') {
-    statusActions.innerHTML = '<button class="btn btn-ghost" onclick="changeTaskStatus(\'in_progress\')">החזר לבטיפול</button>';
-  }
+  // Populate category select
+  const catSelect = document.getElementById('side-panel-category');
+  catSelect.innerHTML = '<option value="">ללא</option>';
+  categories.forEach(cat => {
+    catSelect.innerHTML += `<option value="${cat.id}" ${cat.id === task.category_id ? 'selected' : ''}>${escapeHtml(cat.name)}</option>`;
+  });
+
+  document.getElementById('task-side-panel').style.display = 'block';
 };
 
-document.getElementById('btn-close-task-detail').addEventListener('click', () => {
-  document.getElementById('task-detail-modal').style.display = 'none';
+document.getElementById('btn-close-side-panel').addEventListener('click', () => {
+  document.getElementById('task-side-panel').style.display = 'none';
 });
 
-document.getElementById('task-detail-modal').querySelector('.modal-backdrop').addEventListener('click', () => {
-  document.getElementById('task-detail-modal').style.display = 'none';
+document.querySelector('.task-side-panel-overlay').addEventListener('click', () => {
+  document.getElementById('task-side-panel').style.display = 'none';
 });
 
-document.getElementById('btn-save-task-notes').addEventListener('click', async () => {
+document.getElementById('btn-side-panel-save').addEventListener('click', async () => {
   if (!currentTaskDetail) return;
-  const notes = document.getElementById('task-detail-notes').value.trim();
-  if (!notes) return;
-  const now = new Date().toLocaleDateString('he-IL');
-  const updated = (currentTaskDetail.description || '') + '\n\n[' + now + '] ' + notes;
-  console.log('Saving notes for task:', currentTaskDetail?.id, 'notes:', notes);
-  const result = await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { description: updated } });
-  if (result.error) {
-    alert('שגיאה בשמירת הערות: ' + result.error);
-    return;
-  }
-  document.getElementById('task-detail-desc').textContent = updated;
-  document.getElementById('task-detail-notes').value = '';
-  currentTaskDetail.description = updated;
-});
-
-window.changeTaskStatus = async function(newStatus) {
-  if (!currentTaskDetail) return;
-  await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body: { status: newStatus } });
-  document.getElementById('task-detail-modal').style.display = 'none';
+  const body = {
+    title: document.getElementById('side-panel-title').value,
+    description: document.getElementById('side-panel-desc').value || null,
+    status: document.getElementById('side-panel-status').value,
+    priority: document.getElementById('side-panel-priority').value,
+    due_date: document.getElementById('side-panel-due').value || null,
+    assigned_to: document.getElementById('side-panel-assigned').value,
+    category_id: document.getElementById('side-panel-category').value || null,
+  };
+  const result = await api('/api/tasks/' + currentTaskDetail.id, { method: 'PATCH', body });
+  if (result.error) { alert('שגיאה: ' + result.error); return; }
+  document.getElementById('task-side-panel').style.display = 'none';
   loadTasks();
-};
+});
 
 // Filter & search listeners
 document.getElementById('show-all-tasks').addEventListener('change', loadTasks);
-document.getElementById('kanban-search').addEventListener('input', renderKanban);
+document.getElementById('task-search').addEventListener('input', renderTaskList);
 
 // Add task modal
 const taskModal = document.getElementById('task-modal');
