@@ -24,6 +24,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
     if (page === 'tasks') loadTasks();
     if (page === 'sales') loadSalesPage();
     if (page === 'listing') initListingPage();
+    if (page === 'help') renderHelp();
     if (page === 'inventory') loadInventoryPage();
     if (page === 'pod') loadPodPage();
     if (page === 'settings') loadSettings();
@@ -2092,6 +2093,118 @@ document.getElementById('fab-modal-save').addEventListener('click', async () => 
   // Reload tasks if on tasks page
   if (document.getElementById('page-tasks').classList.contains('active')) loadTasks();
 });
+
+// ---- Help Page ----
+const helpContent = {
+  he: [
+    { title: 'תחילת עבודה', items: [
+      { q: 'איך מתחילים?', a: 'היכנס לדשבורד, הוסף משימה ראשונה מלוח המשימות, ונסה את סוכן שירות הלקוחות עם הודעה לדוגמה.' },
+      { q: 'האם צריך להתקין משהו?', a: 'לא. המערכת עובדת בדפדפן ואין צורך בהתקנה. פשוט גש לכתובת האתר.' },
+      { q: 'איך מוסיפים משתמשים?', a: 'כרגע המערכת תומכת בשני משתמשים: דוד ואור. ניתן לשייך משימות לכל אחד מהם.' },
+    ]},
+    { title: 'משימות', items: [
+      { q: 'איך יוצרים משימה?', a: 'לחץ על "+ משימה חדשה" או על כפתור ה-+ הצף בפינה. ניתן גם להוסיף משימה ישירות מתוך הקבוצה.' },
+      { q: 'מה המשמעות של הסטטוסים?', a: 'לביצוע = חדשה, בטיפול = בעבודה, הושלם = סיימתי. לחץ על משימה לשנות סטטוס.' },
+      { q: 'איך מוחקים משימה?', a: 'פתח את המשימה ולחץ "מחק משימה". המשימה תסומן כהושלמה (לא נמחקת לחלוטין).' },
+    ]},
+    { title: 'שירות לקוחות', items: [
+      { q: 'איך עובד סוכן השירות?', a: 'הדבק הודעת לקוח בכל שפה, הוסף הערות אם צריך, ולחץ "צור תשובה". המערכת תייצר סיכום בעברית ותשובה באנגלית.' },
+      { q: 'אפשר לשמור תשובה כמשימה?', a: 'כן! לחץ "שמור כמשימה" והודעת הלקוח תישמר כמשימה חדשה עם קטגוריית שירות לקוחות.' },
+    ]},
+    { title: 'מכירות', items: [
+      { q: 'איך מייבאים נתוני מכירות?', a: 'לחץ "ייבוא CSV" ובחר את קובץ EtsySoldOrderItems שהורדת מאטסי. בחר חודש ולחץ ייבוא.' },
+      { q: 'מה זה דוח מס?', a: 'טאב דוח מס מאפשר לייבא Payments CSV, לנתח Activity Summary מצילום מסך, ולשלוח סיכום לרואה חשבון.' },
+      { q: 'איך עובד סינון יהלומים?', a: 'הפעל "הצג יהלומים בלבד" כדי לסנן רק מוצרים שמכילים diamond בשם. מוצג טבלה מפורטת עם ייצוא לאקסל.' },
+    ]},
+    { title: 'POD', items: [
+      { q: 'איך יוצרים מוצרי POD?', a: 'העלה עיצוב, בחר מוצרים מהרשימה (לפי אוריינטציה), מלא כותרת (או השאר ריק ליצירה אוטומטית) ולחץ "צור".' },
+      { q: 'מה זה סנכרון מוצרים?', a: 'כפתור "סנכרן מוצרים" מביא מפרינטיפיי את האוריינטציות הזמינות לכל מוצר ומקבץ אותם בקבוצות.' },
+      { q: 'איך עובד מחולל העיצוב?', a: 'העלה תמונת ייחוס, הוסף הערות סגנון, ובחר ליצור פרומפט למידג\'רני או עיצוב עם DALL-E.' },
+    ]},
+    { title: 'מחולל ליסט', items: [
+      { q: 'איך יוצרים ליסטינג?', a: 'העלה תמונת מוצר, בחר סוג, מלא פרטים ולחץ "צור ליסט". המערכת תייצר כותרת, תיאור וטאגים מותאמים לSEO.' },
+      { q: 'מה זה Keyword Bank?', a: 'מאגר מילות מפתח עם נתוני חיפוש מאטסי. המערכת משתמשת בו ליצירת כותרות וטאגים אופטימליים.' },
+    ]},
+    { title: 'מלאי', items: [
+      { q: 'איך מסנכרנים מוצרים?', a: 'לחץ "סנכרן מוצרים מהמכירות" והמערכת תיצור רשומת מוצר לכל SKU שנמכר.' },
+      { q: 'איך מעדכנים כמות?', a: 'ערוך ישירות בטבלה. לחץ "הגדר כמות ראשונית" לפני שמתחילים לעקוב אחרי מלאי.' },
+    ]},
+  ],
+  en: [
+    { title: 'Getting Started', items: [
+      { q: 'How do I get started?', a: 'Log into the dashboard, create your first task, and try the customer service agent with a sample message.' },
+      { q: 'Do I need to install anything?', a: 'No. The platform runs in your browser — just navigate to the URL.' },
+      { q: 'How do I add users?', a: 'Currently the system supports two users: David and Or. Tasks can be assigned to either.' },
+    ]},
+    { title: 'Tasks', items: [
+      { q: 'How do I create a task?', a: 'Click "+ New Task" or the floating + button. You can also add tasks inline within each status group.' },
+      { q: 'What do the statuses mean?', a: 'To Do = new, In Progress = working on it, Done = completed. Click a task to change its status.' },
+      { q: 'How do I delete a task?', a: 'Open the task and click "Delete Task". The task is marked as done (not permanently deleted).' },
+    ]},
+    { title: 'Customer Service', items: [
+      { q: 'How does the CS agent work?', a: 'Paste a customer message in any language, add optional notes, and click "Generate Reply". The system creates a Hebrew summary and English reply.' },
+      { q: 'Can I save a reply as a task?', a: 'Yes! Click "Save as Task" and the customer message will be saved as a new task under Customer Service category.' },
+    ]},
+    { title: 'Sales', items: [
+      { q: 'How do I import sales data?', a: 'Click "Import CSV" and select the EtsySoldOrderItems file from Etsy. Choose the month and click Import.' },
+      { q: 'What is the Tax Report?', a: 'The Tax Report tab lets you import Payments CSV, analyze Activity Summary screenshots, and email summaries to your accountant.' },
+      { q: 'How does diamond filtering work?', a: 'Toggle "Show diamonds only" to filter products containing "diamond" in the name. A detailed table with Excel export is shown.' },
+    ]},
+    { title: 'POD', items: [
+      { q: 'How do I create POD products?', a: 'Upload a design, select products by orientation, fill in title (or leave blank for AI generation), and click Create.' },
+      { q: 'What is product sync?', a: 'The "Sync Products" button fetches available orientations from Printify for each product and groups them accordingly.' },
+      { q: 'How does the design generator work?', a: 'Upload a reference image, add style notes, then choose to generate a Midjourney prompt or a DALL-E design.' },
+    ]},
+    { title: 'Listing Generator', items: [
+      { q: 'How do I create a listing?', a: 'Upload a product image, select the type, fill in details and click "Generate Listing". The system creates SEO-optimized title, description and tags.' },
+      { q: 'What is the Keyword Bank?', a: 'A database of search keywords with Etsy volume data. The system uses it to create optimal titles and tags.' },
+    ]},
+    { title: 'Inventory', items: [
+      { q: 'How do I sync products?', a: 'Click "Sync Products from Sales" and the system will create a product record for each SKU found in your sales data.' },
+      { q: 'How do I update quantities?', a: 'Edit directly in the table. Click "Set Initial Quantity" before starting to track inventory.' },
+    ]},
+  ],
+};
+
+let helpLang = localStorage.getItem('helpLang') || 'he';
+
+window.setHelpLang = function(lang) {
+  helpLang = lang;
+  localStorage.setItem('helpLang', lang);
+  renderHelp();
+};
+
+function renderHelp() {
+  document.getElementById('btn-lang-he').classList.toggle('active', helpLang === 'he');
+  document.getElementById('btn-lang-en').classList.toggle('active', helpLang === 'en');
+
+  const page = document.getElementById('page-help');
+  if (helpLang === 'en') {
+    page.classList.add('ltr');
+    document.getElementById('help-page-title').textContent = 'Help Center';
+    document.getElementById('help-page-subtitle').textContent = 'FAQ and useful information';
+  } else {
+    page.classList.remove('ltr');
+    document.getElementById('help-page-title').textContent = 'מרכז עזרה';
+    document.getElementById('help-page-subtitle').textContent = 'שאלות נפוצות ומידע שימושי';
+  }
+
+  const sections = helpContent[helpLang] || [];
+  document.getElementById('help-content').innerHTML = sections.map((sec, si) =>
+    `<div class="help-section">
+      <div class="help-section-title">${escapeHtml(sec.title)}</div>
+      ${sec.items.map((item, ii) =>
+        `<div class="help-item" onclick="this.classList.toggle('open')">
+          <div class="help-question">
+            <span>${escapeHtml(item.q)}</span>
+            <span class="help-question-arrow">▼</span>
+          </div>
+          <div class="help-answer">${escapeHtml(item.a)}</div>
+        </div>`
+      ).join('')}
+    </div>`
+  ).join('');
+}
 
 // ---- Util ----
 function escapeHtml(str) {
