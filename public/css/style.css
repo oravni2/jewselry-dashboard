@@ -108,10 +108,10 @@ body {
 
 .sidebar-link {
   display: block;
-  color: #A8A29E;
+  color: #C4BDB7;
   text-decoration: none;
   padding: 0.5rem 0.85rem;
-  font-size: 0.86rem;
+  font-size: 13px;
   font-weight: 500;
   transition: var(--transition);
   border-radius: var(--radius-sm);
@@ -131,7 +131,7 @@ body {
 
 .sidebar-parent {
   font-weight: 700;
-  color: #57534E;
+  color: #78716C;
   pointer-events: none;
   padding-top: 0.85rem;
   font-size: 9px;
@@ -142,7 +142,7 @@ body {
 .sidebar-sub {
   padding-right: 2rem;
   font-size: 11px;
-  color: #78716C;
+  color: #A8A29E;
 }
 
 .sidebar-bottom {
