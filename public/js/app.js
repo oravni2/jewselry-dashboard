@@ -1879,19 +1879,29 @@ function handlePodImage(file) {
 }
 
 // Compress image client-side if too large (>4MB in base64 = ~5.3M chars)
+// PNGs with transparency are preserved losslessly; other formats recompressed as JPEG
 async function compressImageIfNeeded(base64) {
   return new Promise((resolve) => {
+    const isPNG = base64.startsWith('data:image/png');
+    const sizeLimit = 5600000; // ~4MB in base64 chars
+
     const img = new Image();
     img.onload = () => {
-      // Detect orientation
       let orientation = 'square';
       if (img.width > img.height * 1.1) orientation = 'horizontal';
       else if (img.height > img.width * 1.1) orientation = 'vertical';
 
-      if (base64.length <= 5333333) {
+      // PNG under 4MB: send original, preserving alpha perfectly
+      if (isPNG && base64.length <= sizeLimit) {
+        resolve({ data: base64, orientation, isPNG: true });
+        return;
+      }
+      // Non-PNG under 4MB: send original
+      if (!isPNG && base64.length <= 5333333) {
         resolve({ data: base64, orientation });
         return;
       }
+
       const canvas = document.createElement('canvas');
       let w = img.width, h = img.height;
       const maxDim = 1500;
@@ -1902,8 +1912,15 @@ async function compressImageIfNeeded(base64) {
       }
       canvas.width = w;
       canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve({ data: canvas.toDataURL('image/jpeg', 0.85), orientation });
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      if (isPNG) {
+        // PNG: lossless export, preserves transparency
+        resolve({ data: canvas.toDataURL('image/png'), orientation, isPNG: true });
+      } else {
+        resolve({ data: canvas.toDataURL('image/jpeg', 0.85), orientation });
+      }
     };
     img.src = base64;
   });
@@ -1928,10 +1945,10 @@ document.getElementById('btn-create-pod').addEventListener('click', async () => 
 
   try {
     // Step 1: Compress and upload image to Printify
-    const { data: compressedImage, orientation: imageOrientation } = await compressImageIfNeeded(podImageBase64);
+    const { data: compressedImage, orientation: imageOrientation, isPNG } = await compressImageIfNeeded(podImageBase64);
     const uploadRes = await api('/api/printify/upload-image', {
       method: 'POST',
-      body: { image: compressedImage, filename: 'design.png' },
+      body: { image: compressedImage, filename: isPNG ? 'design.png' : 'design.jpg' },
     });
     if (uploadRes.error) { alert('שגיאה בהעלאת תמונה: ' + uploadRes.error); return; }
     const imageId = uploadRes.id;
