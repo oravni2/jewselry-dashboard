@@ -1000,6 +1000,35 @@ OUTPUT JSON ONLY — no markdown:
       console.error('[Printify] Post-create pricing failed:', e.message);
     }
 
+    // Auto-publish the product
+    let publishWarning = null;
+    let published = false;
+    try {
+      const publishRes = await fetch(`https://api.printify.com/v1/shops/${shopId}/products/${data.id}/publish.json`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: true,
+          description: true,
+          images: true,
+          variants: true,
+          tags: true,
+          shipping_template: true,
+        }),
+      });
+      if (publishRes.ok) {
+        published = true;
+        console.log('[Printify] Product auto-published:', data.id);
+      } else {
+        const errText = await publishRes.text().catch(() => '');
+        console.error(`[Printify] Auto-publish failed (${publishRes.status}):`, errText);
+        publishWarning = 'Auto-publish failed — publish manually in Printify';
+      }
+    } catch (e) {
+      console.error('[Printify] Auto-publish error:', e.message);
+      publishWarning = 'Auto-publish failed — publish manually in Printify';
+    }
+
     res.json({
       ...data,
       editor_url: `https://printify.com/app/store/${shopId}/products/${data.id}`,
@@ -1007,6 +1036,10 @@ OUTPUT JSON ONLY — no markdown:
       generated_description: generate_content ? finalDescription : undefined,
       generated_tags: tagsArray.length > 0 ? tagsArray : generatedTags,
       generated_warning: generatedWarning,
+      success: true,
+      product_id: data.id,
+      ...(published ? { published: true } : {}),
+      ...(publishWarning ? { publish_warning: publishWarning } : {}),
     });
   } catch (err) {
     console.error('[Printify] Unhandled error:', err.message, err.stack);
